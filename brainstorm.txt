@@ -1,0 +1,37 @@
+Website: Amazon
+>> What are you searching for today?
+    // [VALID] *continue*
+    // [INVALID] I'm sorry but there seem to be no results that match
+    // your request. Would you like to try again?
+        // [y] *reprompt*
+        // [n] *exit*
+    >> What is your target price range?
+    // $[BLANK] to $[BLANK]
+    // [VALID] *continue*
+    // [INVALID] There seems to be an error; please enter a valid price
+    // range.
+        >> What is your target quality range?
+        // [BLANK] Star(s) & Up
+        // [VALID] *continue*
+        // [INVALID] There seems to be an error; please choose a number 1
+        // through 4.
+            >> Sort by?
+            ** Options **
+            -> Featured
+            -> Price: Low to High
+            -> Price: High to Low
+            -> Avg. Customer Rating
+            -> Newest Arrivals
+            // [VALID] *continue*
+            // [INVALID] There seems to be an error; please choose from one
+            // of the following categories: Featured, Price: Low to High,
+            // Price: High to Low, Avg. Customer Rating, or Newest Arrivals.
+                >> At least how many customer reviews would you like on this product?
+                // [VALID] *compare number of reviews*
+                    // [NULL] There are no items that match your request.
+                    // [NON-NULL]
+                        // [QUALIFIED] *include in output*
+                        // [UNQUALIFIED] *continue to next iteration*
+                // [INVALID] There seems to be an error; please enter a valid
+                // number.
+// *list links of results*

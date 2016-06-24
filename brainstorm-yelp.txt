@@ -1,0 +1,56 @@
+Website: Yelp
+>> Welcome to Yelp Scraper, your Yelp aficionado. At any time if you need help, enter 'help' or '-h'. If you would like to restart your search, enter 'start' or '-s'. If you would like to quit, enter 'quit' or '-q'. ** Back feature? **
+*** 1 sec delay ***
+>> What is your location?
+    // [VALID] *continue*
+    // [INVALID] Please enter a valid location.
+    >> What are you searching for?
+        // [VALID] *continue*
+        // [INVALID] There seem to be no matches to your request. Try again?
+            // [y] *continue*
+            // [n] *restart with welcome*
+        >> What is your price range?
+            // $__ to $__
+                // $: Under $10
+                // $$: $11-$30
+                // $$$: $31-$60
+                // $$$$: Above $61
+            // [VALID] *continue*
+                // [NULL] There are no items that match your request. ** Try again? **
+                // [NON-NULL]
+                    // [QUALIFIED] *include in output*
+                    // [UNQUALIFIED] *continue to next iteration*
+            // [INVALID] There seems to be an error; please enter a valid price range.
+            >> What is your target quality range? Please enter a number 1 through 4.
+                // __ Stars & Up
+                // [VALID] *continue*
+                    // [NULL] There are no items that match your request. ** Try again? **
+                    // [NON-NULL]
+                        // [QUALIFIED] *include in output*
+                        // [UNQUALIFIED] *continue to next iteration*
+                // [INVALID] There seems to be an error; please enter a number 1 through 4.
+                >> At least how many customer reviews would you like on this request?
+                    // [VALID] *continue*
+                        // [NULL] There are no items that match your request. ** Try again? **
+                        // [NON-NULL]
+                            // [QUALIFIED] *include in output*
+                            // [UNQUALIFIED] *continue to next iteration*
+                    // [INVALID] There seems to be an error; please enter a valid number.
+                    >> Open now? Please answer with 'y' or 'n'.
+                        // [y] *continue open now*
+                            // [NULL] There are no items that match your request. ** Try again? **
+                            // [NON-NULL]
+                                // [QUALIFIED] *include in output*
+                                // [UNQUALIFIED] *continue to next iteration*
+                        // [n] *continue*
+                            // [NULL] There are no items that match your request. ** Try again? **
+                            // [NON-NULL]
+                                // [QUALIFIED] *include in output*
+                                // [UNQUALIFIED] *continue to next iteration*
+                        // [INVALID] There seems to be an error; please answer with 'y' or 'n'.
+                        >> What would you like to include in your request? Enter '-a' for address, '-p' for phone number, or '-ap' for both.
+                            // [VALID] *list of requests*
+                            // [INVALID] There seems to be an error; please enter '-a' for address, '-p' for phone number, or '-ap' for both.
+                            >> Would you like to search for anything else?
+                                // [VALID] *restart*
+                                // [INVALID] Goodbye!
