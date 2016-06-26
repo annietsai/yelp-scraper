@@ -5,7 +5,6 @@ import requests
 import time
 import sys
 
-# url = "http://www.yelp.com"
 PAGE = requests.get('http://www.yelp.com').content
 SOUP = BeautifulSoup(PAGE, 'html.parser')
 
@@ -51,14 +50,23 @@ def main():
     i = 0
     while location != True:
         if i == 0:
-            location = input('What is your location?\n>> ')
+            location = input('What is your location? Input [city, state] for '
+                + 'best results.\n>> ')
         elif i > 0:
             location = input('There seems to be an error; please enter a valid '
                 + 'location.\n>> ')
+        else:
+            print('There are multiple locations matching your search. Please try')
+            location = input('inputting [city, state] or [city, country].\n>> ')
+
         # result = location_f(location)
         # or--> SOUP = new page with location??
         if result NOTVALID: #FIXME (if location not found)
-            i += 1
+            i = 10
+            location = None
+            continue
+        elif result MULTVALID: #FIXME (if multiple locations matching search)
+            i = -10
             location = None
             continue
 
@@ -96,6 +104,7 @@ def main():
             #         j += 1
         if search == 'start':
             location = None
+            i = 0
             continue
 
         price = None
@@ -127,6 +136,7 @@ def main():
                     price = proceed('q', 0)
         if price == 'start':
             location = None
+            i = 0
             continue
 
         quality = None
@@ -152,6 +162,7 @@ def main():
                     quality = proceed('q', 0)
         if quality == 'start':
             location = None
+            i = 0
             continue
 
         reviews = None
@@ -177,6 +188,7 @@ def main():
                     reviews = proceed('q', 0)
         if reviews == 'start':
             location = None
+            i = 0
             continue
 
     return result
