@@ -4,17 +4,18 @@ from lxml import html
 import requests
 import time
 import sys
+import re
 
-PAGE = requests.get('http://www.yelp.com').content
-SOUP = BeautifulSoup(PAGE, 'html.parser')
+URL = 'http://www.yelp.com'
+# PAGE = requests.get(URL).content
+# SOUP = BeautifulSoup(PAGE, 'html.parser')
 
 def main():
     """Main function for Yelp Scraper."""
 
     print('*** Welcome to Yelp Scraper, your Yelp-search aficionado. ***')
-    print('At any time if you need help, enter "help" or "-h". If you would like')
-    print('to restart your search, enter "start" or "-s". If you would like to')
-    print('quit, enter "quit" or "-q".')
+    print('At any time if you would like to restart your search, enter "start"')
+    print('or "-s". If you would like to quit, enter "quit" or "-q".')
     time.sleep(1.5)
 
     def proceed(cont, counter):
@@ -59,8 +60,12 @@ def main():
             print('There are multiple locations matching your search. Please try')
             location = input('inputting [city, state] or [city, country].\n>> ')
 
-        # result = location_f(location)
-        # or--> SOUP = new page with location??
+        location = re.sub('\s+', '+', location)
+        loc_url = 'find_loc=' + location
+        new_url = URL + 'search?' + loc_url
+        page = requests.get(new_url).content
+        soup = BeautifulSoup(page, 'html.parser')
+
         if result NOTVALID: #FIXME (if location not found)
             i = 10
             location = None
@@ -73,8 +78,11 @@ def main():
         search = None
         while search != True:
             search = input('What are you searching for?\n>> ')
-            # result = search_f(result, search)
-            # or--> SOUP = new page with search
+
+            search = re.sub('\s+', '+', search)
+            search_url = 'find_desc=' + search
+            new_url = URL + 'search?' + search_url + '&' + loc_url
+
             if result ISVALID: #FIXME (if resulting page has matches)
                 break
             search = proceed('q', 0)
@@ -111,26 +119,41 @@ def main():
         j = 0
         while price != True:
             if j == 0:
-                price = input('What is your price range? \n>> ')
+                print('What is your price range? Please enter input in the format')
+                price = input('"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
             elif j > 0:
-                price = input('There seems to be an error; please enter a valid '
-                    + 'price range in the format "[lower] to [upper]" or '
-                    + '"[lower]-[upper]".\n>> ')
-            # parse price for $__ to $__ or $__-$__
-            lower_bound = price[0] #FIXME
-            upper_bound = price[1] #FIXME
+                new_url = URL + 'search?' + search_url + '&' + loc_url
+                price = input('There seems to be an error; please enter a valid price '
+                    + 'range.\n>> ')
+
+            price_lst = []
+            if 'to' in price:
+                price_lst = price.split(' ')
+                price_lst.remove('to')
+            elif '-' in price:
+                price_lst = price.split('-')
+            price_lst[:] = (value for value in price_lst if value != '')
+            price_lst = ([p.replace('$', '') for p in price_lst])
+
             try:
-                # if type(lower_bound) != int or type(upper_bound) != int:
-                    # j += 1
-                    # continue
+                lower_bound = int(price_lst[0])
+                upper_bound = int(price_lst[1])
                 if lower_bound < 0 or lower_bound > upper_bound:
                     j += 1
                     continue
-            except TypeError: # fix? catch any error for not numerals
+                new_url = new_url + '&start=0&attrs='
+                if upper_bound <= 10:
+                    new_url = new_url + 'RestaurantsPriceRange2.1,'
+                if upper_bound <= 30:
+                    new_url = new_url + 'RestaurantsPriceRange2.2,'
+                if upper_bound <= 60:
+                    new_url = new_url + 'RestaurantsPriceRange2.3,'
+                if lower_bound > 60:
+                    new_url = new_url + 'RestaurantsPriceRange2.4,'
+            except:
                 j += 1
                 continue
-            # result = price_f(result, price)
-            # or--> SOUP = new page with price
+
             if result ISVALID: #FIXME (if resulting page has matches)
                 if result ISNULL:
                     price = proceed('q', 0)
@@ -141,11 +164,13 @@ def main():
 
         quality = None
         k = 0
+        old_url = new_url
         while quality != True:
             if k == 0:
-                quality = input('What is your target quality range? Please enter '
-                    + 'a number 1 through 4.\n>> ')
+                print('What is your target quality range? Please enter a number')
+                quality = input('1 through 4.\n>> ')
             elif k > 0:
+                new_url = old_url
                 quality = input('There seems to be an error; please enter a number '
                     + '1 through 4.\n>> ')
             try:
@@ -191,6 +216,8 @@ def main():
             i = 0
             continue
 
+        input('How many results would you like to show?\n>> ')
+        # for loop to show this many results
     return result
     
 
