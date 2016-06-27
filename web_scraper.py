@@ -1,6 +1,5 @@
-# import urllib
 from bs4 import BeautifulSoup
-from lxml import html
+# from lxml import html
 import requests
 import time
 import sys
@@ -45,6 +44,16 @@ def main():
             counter += 1
             return proceed(cont, counter)
 
+    def startquit(string):
+        """Helper function that checks if user inputted a STRING to restart the search
+        or quit.
+        """
+        if string == 'start' or string == '-s':
+            return 'start'
+        elif string == 'quit' or string == '-q':
+            sys.exit()
+        return None
+
     # fix?? turn into function calls rather than huge while loop in main()
     result = None
     location = None
@@ -59,6 +68,11 @@ def main():
         else:
             print('There are multiple locations matching your search. Please try')
             location = input('inputting [city, state] or [city, country].\n>> ')
+
+        if startquit(location) == 'start':
+            i = 0
+            location = None
+            continue
 
         location = re.sub('\s+', '+', location)
         loc_url = 'find_loc=' + location
@@ -78,6 +92,9 @@ def main():
         search = None
         while search != True:
             search = input('What are you searching for?\n>> ')
+
+            if startquit(search) == 'start':
+                break
 
             search = re.sub('\s+', '+', search)
             search_url = 'find_desc=' + search
@@ -110,6 +127,7 @@ def main():
             #                 print('Please enter [y/n].')
             #     else:
             #         j += 1
+
         if search == 'start':
             location = None
             i = 0
@@ -125,6 +143,9 @@ def main():
                 new_url = URL + 'search?' + search_url + '&' + loc_url
                 price = input('There seems to be an error; please enter a valid price '
                     + 'range.\n>> ')
+
+            if startquit(price) == 'start':
+                break
 
             price_lst = []
             if 'to' in price:
@@ -157,6 +178,7 @@ def main():
             if result ISVALID: #FIXME (if resulting page has matches)
                 if result ISNULL:
                     price = proceed('q', 0)
+
         if price == 'start':
             location = None
             i = 0
@@ -173,6 +195,10 @@ def main():
                 new_url = old_url
                 quality = input('There seems to be an error; please enter a number '
                     + '1 through 4.\n>> ')
+
+            if startquit(quality) == 'start':
+                break
+
             try:
                 if quality < 1 or quality > 4:
                     k += 1
@@ -185,6 +211,7 @@ def main():
             if result ISVALID:
                 if result ISNULL:
                     quality = proceed('q', 0)
+
         if quality == 'start':
             location = None
             i = 0
@@ -199,6 +226,10 @@ def main():
             elif l > 0:
                 reviews = input('There seems to be an error; please enter a valid '
                     + 'number.\n>> ')
+
+            if startquit(reviews) == 'start':
+                break
+
             try:
                 if reviews < 0:
                     l += 1
@@ -211,30 +242,22 @@ def main():
             if result ISVALID:
                 if result ISNULL:
                     reviews = proceed('q', 0)
+
         if reviews == 'start':
             location = None
             i = 0
             continue
 
-        input('How many results would you like to show?\n>> ')
+        num_results = input('How many results would you like to show?\n>> ')
+        if startquit(num_results) == 'start':
+            location = None
+            i = 0
+            continue
+
         # for loop to show this many results
+
     return result
     
-
-def location_f(loc):
-    """Parses SOUP to find all results matching LOC."""
-
-
-def search_f(results, search_request):
-    """Looks at RESULTS to find all results matching SEARCH_REQUEST."""
-    # may need to change RESULTS to next SOUP page
-
-
-def price_f(results, price_range):
-    """Parses PRICE_RANGE to find all results in RESULTS matching that
-    range.
-    """
-    # change RESULTS to next SOUP page?
 
 
 def quality_f(results, quality_range):
