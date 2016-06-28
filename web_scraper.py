@@ -41,8 +41,8 @@ def main():
             return proceed(cont, counter + 1)
 
     def startquit(string):
-        """Helper function that checks if user inputted a STRING to restart the search
-        or quit.
+        """Helper function that checks if the user inputted a STRING to restart the
+        search or quit.
         """
         if string == 'start' or string == '-s':
             return 'start'
@@ -51,7 +51,6 @@ def main():
         return None
 
     # fix?? turn into function calls rather than huge while loop in main()
-    result = None
     location = None
     i = 0
     while location != True:
@@ -73,7 +72,7 @@ def main():
         location = re.sub('\s+', '+', location)
         loc_url = 'find_loc=' + location
         new_url = URL + 'search?' + loc_url
-        page = requests.get(new_url).content
+        page = requests.get(new_url).content # turn into a function (handle repeats)
         soup = BeautifulSoup(page, 'html.parser')
         body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
 
@@ -175,8 +174,8 @@ def main():
         old_url = new_url
         while quality != True:
             if k == 0:
-                print('What is your target ratings range? Please enter a number')
-                quality = input('1 through 4.\n>> ')
+                quality = input('What is your target minimum rating? Please enter '
+                    + 'a number 1 through 4.\n>> ')
             elif k > 0:
                 new_url = old_url
                 quality = input('There seems to be an error; please enter a number '
@@ -197,6 +196,8 @@ def main():
             if result ISVALID:
                 if result ISNULL:
                     quality = proceed('q', 0)
+                else:
+                    # put titles into a list?
 
         if quality == 'start':
             location = None
@@ -234,16 +235,20 @@ def main():
             i = 0
             continue
 
-        num_results = input('How many results would you like to show?\n>> ')
+        num_results = input('What is the maximum number of results you would like '
+            + 'to show?\n>> ')
         if startquit(num_results) == 'start':
             location = None
             i = 0
             continue
 
         # for loop to show this many results
+        # max(num_results - 1, len(results_lst))
 
     return result
     
+def location_f(counter):
+    """Finds the location. Uses COUNTER to determine what to prompt user."""
 
 
 def quality_f(results, quality_range):
