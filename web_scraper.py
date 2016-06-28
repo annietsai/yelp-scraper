@@ -26,7 +26,7 @@ def main():
             cont = input('There seem to be no matches to your request. '
                 + 'Try again? Enter [y/n].\n>> ')
         elif counter > 0:
-            cont = input('Please enter [y/n]\n>> ')
+            cont = input('Please enter [y/n].\n>> ')
 
         if cont == 'y':
             return None
@@ -41,8 +41,7 @@ def main():
                 else:
                     print('Please enter [y/n].')
         else:
-            counter += 1
-            return proceed(cont, counter)
+            return proceed(cont, counter + 1)
 
     def startquit(string):
         """Helper function that checks if user inputted a STRING to restart the search
@@ -79,8 +78,12 @@ def main():
         new_url = URL + 'search?' + loc_url
         page = requests.get(new_url).content
         soup = BeautifulSoup(page, 'html.parser')
+        result = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+        result = result.select('.top-shelf-grey')[0].select('.content-container')[0]
+        result = result.select('.search-page-top')[0].select('.column-alpha')[0]
+        result = result.select('.clearfix')[0].h1.getText()
 
-        if result NOTVALID: #FIXME (if location not found)
+        if 'No Results' in result:
             i = 10
             location = None
             continue
@@ -103,30 +106,6 @@ def main():
             if result ISVALID: #FIXME (if resulting page has matches)
                 break
             search = proceed('q', 0)
-
-            # while cont != 'y' and cont != 'n':
-            #     if j == 0:
-            #         cont = input('There seem to be no matches to your request. Try '
-            #             + 'again? Enter [y/n].\n>> ')
-            #     if j > 0:
-            #         cont = input('Please enter [y/n].\n>> ')
-            #     if cont == 'y':
-            #         search = False
-            #         break
-            #     elif cont == 'n':
-            #         restart = 'q'
-            #         while restart != 'y' and restart != 'n':
-            #             restart = input('Would you like to restart your search?\n>> ')
-            #             if restart == 'y':
-            #                 location = False
-            #                 search = True
-            #                 break
-            #             elif restart == 'n':
-            #                 sys.exit()
-            #             else:
-            #                 print('Please enter [y/n].')
-            #     else:
-            #         j += 1
 
         if search == 'start':
             location = None
@@ -189,7 +168,7 @@ def main():
         old_url = new_url
         while quality != True:
             if k == 0:
-                print('What is your target quality range? Please enter a number')
+                print('What is your target ratings range? Please enter a number')
                 quality = input('1 through 4.\n>> ')
             elif k > 0:
                 new_url = old_url
@@ -203,7 +182,7 @@ def main():
                 if quality < 1 or quality > 4:
                     k += 1
                     continue
-            except TypeError: # fix?
+            except:
                 k += 1
                 continue
             # result = quality_f(result, quality)
@@ -234,7 +213,7 @@ def main():
                 if reviews < 0:
                     l += 1
                     continue
-            except TypeError: # fix?
+            except: # fix?
                 l += 1
                 continue
             # result = reviews_f(result, reviews)
@@ -271,3 +250,27 @@ def reviews_f(results, reviews_range):
 
 
 main()
+
+            # while cont != 'y' and cont != 'n':
+            #     if j == 0:
+            #         cont = input('There seem to be no matches to your request. Try '
+            #             + 'again? Enter [y/n].\n>> ')
+            #     if j > 0:
+            #         cont = input('Please enter [y/n].\n>> ')
+            #     if cont == 'y':
+            #         search = False
+            #         break
+            #     elif cont == 'n':
+            #         restart = 'q'
+            #         while restart != 'y' and restart != 'n':
+            #             restart = input('Would you like to restart your search?\n>> ')
+            #             if restart == 'y':
+            #                 location = False
+            #                 search = True
+            #                 break
+            #             elif restart == 'n':
+            #                 sys.exit()
+            #             else:
+            #                 print('Please enter [y/n].')
+            #     else:
+            #         j += 1
