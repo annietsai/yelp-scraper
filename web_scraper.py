@@ -50,6 +50,24 @@ def main():
             sys.exit()
         return None
 
+    def result_soup(url, query):
+        """Helper function that takes in a string URL and turns it into soup, which
+        is then dissected to find particular strings. The QUERY determines which path
+        to take.
+        """
+        page = requests.get(url).content
+        soup = BeautifulSoup(page, 'html.parser')
+        body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+        if query == 'location':
+            result = body_wrap.select('#super-container')[0].select('.container')[0]
+            result = result.select('.clearfix')[0].select('.column-alpha')[0]
+            result = result.select('.content')[0].h2.getText()
+        else:
+            result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
+            result = result.select('.search-page-top')[0].select('.column-alpha')[0]
+            result = result.select('.clearfix')[0].h1.getText()
+        return result
+
     # fix?? turn into function calls rather than huge while loop in main()
     location = None
     i = 0
@@ -72,13 +90,8 @@ def main():
         location = re.sub('\s+', '+', location)
         loc_url = 'find_loc=' + location
         new_url = URL + 'search?' + loc_url
-        page = requests.get(new_url).content # turn into a function (handle repeats)
-        soup = BeautifulSoup(page, 'html.parser')
-        body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+        result = result_soup(new_url, 'location')
 
-        result = body_wrap.select('#super-container')[0].select('.container')[0]
-        result = result.select('.clearfix')[0].select('.column-alpha')[0]
-        result = result.select('.content')[0].h2.getText()
         if 'Sorry' in result:
             i = 10
             location = None
@@ -98,12 +111,8 @@ def main():
             search = re.sub('\s+', '+', search)
             search_url = 'find_desc=' + search
             new_url = URL + 'search?' + search_url + '&' + loc_url
-            page = requests.get(new_url).content
-            soup = BeautifulSoup(page, 'html.parser')
+            result = result_soup(new_url, 'search')
 
-            result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
-            result = result.select('.search-page-top')[0].select('.column-alpha')[0]
-            result = result.select('.clearfix')[0].h1.getText()
             if 'Best' in result:
                 break
             search = proceed('q', 0)
@@ -155,12 +164,8 @@ def main():
                 j += 1
                 continue
 
-            page = requests.get(new_url).content
-            soup = BeautifulSoup(page, 'html.parser')
+            result = result_soup(new_url, 'price')
 
-            result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
-            result = result.select('.search-page-top')[0].select('.column-alpha')[0]
-            result = result.select('.clearfix')[0].h1.getText()
             if 'No Results' in result:
                 price = proceed('q', 0)
 
@@ -247,20 +252,35 @@ def main():
 
     return result
     
-def location_f(counter):
-    """Finds the location. Uses COUNTER to determine what to prompt user."""
-    if counter == 0:
-        location = input('What is your location? Input [city, state] for '
-            + 'best results.\n>> ')
-    elif counter > 0:
-        location = input('There seems to be an error; please enter a valid '
-            + 'location.\n>> ')
-    else:
-        print('There are multiple locations matching your search. Please try')
-        location = input('inputting [city, state] or [city, country].\n>> ')
+# def location_f(counter):
+#     """Finds the location. Uses COUNTER to determine what to prompt user."""
+#     if counter == 0:
+#         location = input('What is your location? Input [city, state] for '
+#             + 'best results.\n>> ')
+#     elif counter > 0:
+#         location = input('There seems to be an error; please enter a valid '
+#             + 'location.\n>> ')
+#     else:
+#         print('There are multiple locations matching your search. Please try')
+#         location = input('inputting [city, state] or [city, country].\n>> ')
 
-    if startquit(location) == 'start':
-        return location_f(0)
+#     if startquit(location) == 'start':
+#         return location_f(0)
+
+#     location = re.sub('\s+', '+', location)
+#     loc_url = 'find_loc=' + location
+#     new_url = URL + 'search?' + loc_url
+#     page = requests.get(new_url).content # turn into a function (handle repeats)
+#     soup = BeautifulSoup(page, 'html.parser')
+#     body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+
+#     result = body_wrap.select('#super-container')[0].select('.container')[0]
+#     result = result.select('.clearfix')[0].select('.column-alpha')[0]
+#     result = result.select('.content')[0].h2.getText()
+#     if 'Sorry' in result:
+#         return location_f(10)
+#     elif 'found multiple' in result:
+#         return location_f(-10)
 
 def quality_f(results, quality_range):
     """Looks at RESULTS to find all results matching QUALITY_RANGE."""
