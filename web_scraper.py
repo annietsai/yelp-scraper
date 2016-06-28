@@ -1,13 +1,10 @@
 from bs4 import BeautifulSoup
-# from lxml import html
 import requests
 import time
 import sys
 import re
 
 URL = 'http://www.yelp.com'
-# PAGE = requests.get(URL).content
-# SOUP = BeautifulSoup(PAGE, 'html.parser')
 
 def main():
     """Main function for Yelp Scraper."""
@@ -92,20 +89,6 @@ def main():
             location = None
             continue
 
-        # try:
-        #     result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
-        #     result = result.select('.search-page-top')[0].select('.column-alpha')[0]
-        #     result = result.select('.clearfix')[0].h1.getText()
-        #     if 'No Results' in result:
-        #         i = 10
-        #         location = None
-        #         continue
-        # except:
-        #     i = 10
-        #     location = None
-        #     continue
-        
-
         search = None
         while search != True:
             search = input('What are you searching for?\n>> ')
@@ -179,9 +162,8 @@ def main():
             result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
             result = result.select('.search-page-top')[0].select('.column-alpha')[0]
             result = result.select('.clearfix')[0].h1.getText()
-            if search in result:
-                if result ISNULL:
-                    price = proceed('q', 0)
+            if 'No Results' in result:
+                price = proceed('q', 0)
 
         if price == 'start':
             location = None
