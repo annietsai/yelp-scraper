@@ -78,16 +78,24 @@ def main():
         new_url = URL + 'search?' + loc_url
         page = requests.get(new_url).content
         soup = BeautifulSoup(page, 'html.parser')
-        result = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
-        result = result.select('.top-shelf-grey')[0].select('.content-container')[0]
+        body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+
+        result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
         result = result.select('.search-page-top')[0].select('.column-alpha')[0]
         result = result.select('.clearfix')[0].h1.getText()
-
         if 'No Results' in result:
             i = 10
             location = None
             continue
-        elif result MULTVALID: #FIXME (if multiple locations matching search)
+
+        result = body_wrap.select('#super-container')[0].select('.container')[0]
+        result = result.select('.clearfix')[0].select('.column-alpha')[0]
+        result = result.select('.content')[0].h2.getText()
+        if 'Sorry' in result:
+            i = 10
+            location = None
+            continue
+        elif 'found multiple' in result:
             i = -10
             location = None
             continue
