@@ -80,14 +80,6 @@ def main():
         soup = BeautifulSoup(page, 'html.parser')
         body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
 
-        result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
-        result = result.select('.search-page-top')[0].select('.column-alpha')[0]
-        result = result.select('.clearfix')[0].h1.getText()
-        if 'No Results' in result:
-            i = 10
-            location = None
-            continue
-
         result = body_wrap.select('#super-container')[0].select('.container')[0]
         result = result.select('.clearfix')[0].select('.column-alpha')[0]
         result = result.select('.content')[0].h2.getText()
@@ -100,6 +92,20 @@ def main():
             location = None
             continue
 
+        # try:
+        #     result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
+        #     result = result.select('.search-page-top')[0].select('.column-alpha')[0]
+        #     result = result.select('.clearfix')[0].h1.getText()
+        #     if 'No Results' in result:
+        #         i = 10
+        #         location = None
+        #         continue
+        # except:
+        #     i = 10
+        #     location = None
+        #     continue
+        
+
         search = None
         while search != True:
             search = input('What are you searching for?\n>> ')
@@ -110,8 +116,13 @@ def main():
             search = re.sub('\s+', '+', search)
             search_url = 'find_desc=' + search
             new_url = URL + 'search?' + search_url + '&' + loc_url
+            page = requests.get(new_url).content
+            soup = BeautifulSoup(page, 'html.parser')
 
-            if result ISVALID: #FIXME (if resulting page has matches)
+            result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
+            result = result.select('.search-page-top')[0].select('.column-alpha')[0]
+            result = result.select('.clearfix')[0].h1.getText()
+            if 'Best' in result:
                 break
             search = proceed('q', 0)
 
@@ -162,7 +173,13 @@ def main():
                 j += 1
                 continue
 
-            if result ISVALID: #FIXME (if resulting page has matches)
+            page = requests.get(new_url).content
+            soup = BeautifulSoup(page, 'html.parser')
+
+            result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
+            result = result.select('.search-page-top')[0].select('.column-alpha')[0]
+            result = result.select('.clearfix')[0].h1.getText()
+            if search in result:
                 if result ISNULL:
                     price = proceed('q', 0)
 
