@@ -249,7 +249,18 @@ def main():
     
 def location_f(counter):
     """Finds the location. Uses COUNTER to determine what to prompt user."""
+    if counter == 0:
+        location = input('What is your location? Input [city, state] for '
+            + 'best results.\n>> ')
+    elif counter > 0:
+        location = input('There seems to be an error; please enter a valid '
+            + 'location.\n>> ')
+    else:
+        print('There are multiple locations matching your search. Please try')
+        location = input('inputting [city, state] or [city, country].\n>> ')
 
+    if startquit(location) == 'start':
+        return location_f(0)
 
 def quality_f(results, quality_range):
     """Looks at RESULTS to find all results matching QUALITY_RANGE."""
