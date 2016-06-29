@@ -156,7 +156,7 @@ def main():
 
             search = re.sub('\s+', '+', search)
             search_url = 'find_desc=' + search
-            new_url = URL + 'search?' + search_url + '&' + loc_url
+            new_url = URL + '/search?' + search_url + '&' + loc_url
             result = result_soup(new_url, 'search')
 
             if 'Best' in result:
