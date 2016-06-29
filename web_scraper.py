@@ -46,18 +46,18 @@ def result_soup(url, query):
     """
     page = requests.get(url).content
     soup = BeautifulSoup(page, 'html.parser')
-    body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+    main_content = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
     if query == 'location':
-        result = body_wrap.select('#super-container')[0].select('.container')[0]
-        result = result.select('.search-exception')[0].select('.column-alpha')[0]
         try:
-            result = result.select('.content')[0].h2.getText()
+            result = main_content.select('#super-container')[0]\
+                .select('.container')[0].select('.search-exception')[0]\
+                .select('.column-alpha')[0].select('.content')[0].h2.getText()
         except:
             result = 'ok'
     else:
-        result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
-        result = result.select('.search-page-top')[0].select('.column-alpha')[0]
-        result = result.select('.clearfix')[0].h1.getText()
+        result = main_content.select('.top-shelf-grey')[0]\
+            .select('.content-container')[0].select('.search-page-top')[0]\
+            .select('.column-alpha')[0].select('.clearfix')[0].h1.getText()
     return result
 
 def quality_f(url, quality, reviews, maximum, search, attrs):
@@ -70,31 +70,30 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
     while len(results) < int(maximum):
         page = requests.get(url).content
         soup = BeautifulSoup(page, 'html.parser')
-        body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
-        businesses = body_wrap.select('#super-container')[0].select('.container')[0]
-        businesses = businesses.select('.search-results-block')[0]
-        businesses = businesses.select('.column-alpha')[0].select('.indexed-biz-archive')[0]
-        businesses = businesses.select('.search-results-content')[0]
+        main_content = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
         try:
-            businesses = businesses.select('ul .regular-search-result')
+            businesses = main_content.select('#super-container')[0]\
+                .select('.container')[0].select('.search-results-block')[0]\
+                .select('.column-alpha')[0].select('.indexed-biz-archive')[0]\
+                .select('.search-results-content')[0].select('ul .regular-search-result')
         except:
             break
 
         for biz in businesses:
-            r = biz.select('.natural-search-result')[0].select('.biz-listing-large')[0]
-            r = r.select('.main-attributes')[0].select('.media-block--12')[0]
-            r = r.select('.media-story')[0]
+            biz_info = biz.select('.natural-search-result')[0]\
+                .select('.biz-listing-large')[0].select('.main-attributes')[0]\
+                .select('.media-block--12')[0].select('.media-story')[0]
 
-            rating = r.select('.biz-rating')[0].select('.rating-large')[0].i
+            rating = biz_info.select('.biz-rating')[0].select('.rating-large')[0].i
             try:
                 stars = str(rating).split(' ')[2].split('_')[1].strip('"')
                 if int(quality) <= int(stars):
-                    rev = r.select('.biz-rating')[0].span.getText()
-                    num = rev.split(' ')
-                    num[:] = (value for value in num if value != '')
+                    biz_rating = biz_info.select('.biz-rating')[0].span.getText()
+                    rating_num = biz_rating.split(' ')
+                    rating_num[:] = (value for value in rating_num if value != '')
 
-                    if int(num[1]) >= int(reviews):
-                        link = URL + r.h3.span.select('a[href]')[0]['href']
+                    if int(rating_num[1]) >= int(reviews):
+                        link = URL + biz_info.h3.span.select('a[href]')[0]['href']
                         results.append(link)
             except:
                 pass
@@ -174,7 +173,7 @@ def main():
             if j == 0:
                 print('What is your price range? Please enter input in the format')
                 price = input('"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
-            elif j > 0:
+            else:
                 new_url = URL + 'search?' + search_url + '&' + loc_url
                 price = input('There seems to be an error; please enter a valid price '
                     + 'range.\n>> ')
@@ -231,7 +230,7 @@ def main():
             if k == 0:
                 num_results = input('What is the maximum number of results you would '
                     + 'like to show?\n>> ')
-            elif k > 0:
+            else:
                 num_results = input('There seems to be an error; please enter a valid '
                     + 'number.\n>> ')
 
@@ -256,7 +255,7 @@ def main():
             if l == 0:
                 quality = input('What is your target minimum rating? Please enter '
                     + 'a number 1 through 4.\n>> ')
-            elif l > 0:
+            else:
                 quality = input('There seems to be an error; please enter a number '
                     + '1 through 4.\n>> ')
 
@@ -284,7 +283,7 @@ def main():
             if m == 0:
                 reviews = input('At least how many customer reviews would you like '
                     + 'on this request?\n>> ')
-            elif m > 0:
+            else:
                 reviews = input('There seems to be an error; please enter a valid '
                     + 'number.\n>> ')
 
