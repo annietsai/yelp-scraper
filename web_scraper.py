@@ -4,19 +4,17 @@ import requests
 import time
 import sys
 import re
-import pdb
 
 URL = 'http://www.yelp.com'
 
-def proceed(cont, counter):
-    """Determines whether or not a search query continues. CONT determines
-    whether or not the user wants to continue the request. COUNTER determines
+def proceed(counter):
+    """Determines whether or not a search query continues. COUNTER determines
     which question to prompt the user with.
     """
     if counter == 0:
         cont = input('There seem to be no matches to your request. '
             + 'Try again? Enter [y/n].\n>> ')
-    elif counter > 0:
+    else:
         cont = input('Please enter [y/n].\n>> ')
 
     if cont == 'y':
@@ -32,7 +30,7 @@ def proceed(cont, counter):
             else:
                 print('Please enter [y/n].')
     else:
-        return proceed(cont, counter + 1)
+        return proceed(counter + 1)
 
 def startquit(string):
     """Checks if the user inputted a STRING to restart the search or quit."""
@@ -163,7 +161,7 @@ def main():
 
             if 'No Results' not in result:
                 break
-            search = proceed('q', 0)
+            search = proceed(0)
 
         if search == 'start':
             location = None
@@ -218,7 +216,7 @@ def main():
             result = result_soup(new_url, 'price')
 
             if 'No Results' in result:
-                price = proceed('q', 0)
+                price = proceed(0)
                 if price is None:
                     j = 0
 
@@ -307,7 +305,7 @@ def main():
             result_lst = quality_f(new_url, quality, reviews, num_results, sr_url,
                 price_url)
             if len(result_lst) == 0:
-                reviews = proceed('q', 0)
+                reviews = proceed(0)
                 if reviews is None:
                     m = 0
 
