@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import webbrowser
 import requests
 import time
 import sys
@@ -64,7 +65,7 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
     """
     results = []
     i = 0
-    while len(results) < maximum: # and still parsible
+    while len(results) < maximum:
         page = requests.get(url).content
         soup = BeautifulSoup(page, 'html.parser')
         body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
@@ -72,7 +73,10 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
         businesses = businesses.select('.search-results-block')[0]
         businesses = businesses.select('.column-alpha')[0].select('.indexed-biz-archive')[0]
         businesses = businesses.select('.search-results-content')[0]
-        businesses = businesses.select('ul .regular-search-result')
+        try:
+            businesses = businesses.select('ul .regular-search-result')
+        except:
+            break
 
         for biz in businesses:
             r = biz.select('.natural-search-result')[0].select('.biz-listing-large')[0]
@@ -83,13 +87,16 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
             try:
                 stars = str(rating).split(' ')[2].split('_')[1].strip('"')
                 if int(quality) <= int(stars):
-                    # find names of businesses?
-                    link = URL + r.h3.span.select('a[href]')[0]['href']
-                    results.append(link)
+                    rev = r.select('.biz-rating')[0].span.getText()
+                    num = rev.split(' ')
+                    num[:] = (value for value in num if value != '')
+
+                    if int(num[1]) >= reviews:
+                        # return dictionary name:link?
+                        link = URL + r.h3.span.select('a[href]')[0]['href']
+                        results.append(link)
             except:
                 pass
-
-            # DO MORE WORK FOR REVIEWS
 
         i += 10
         url = URL + search + '&start=' + str(i) + attrs
@@ -305,6 +312,7 @@ def main():
             i = 0
             continue
 
-    return result_lst #fixme: open up a file with information
+    for r in result_lst:
+        webbrowser.open(r)
 
 main()
