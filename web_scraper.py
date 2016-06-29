@@ -57,8 +57,50 @@ def result_soup(url, query):
         result = result.select('.clearfix')[0].h1.getText()
     return result
 
-def quality_f(url, quality):
-    """Looks at URL to find all results matching QUALITY."""
+def quality_f(url, quality, reviews, maximum, search, attrs):
+    """Looks at URL to find all results matching QUALITY and REVIEWS. Returns the
+    MAXIMUM number of results or less. SEARCH provides the url text before 'start?'
+    and ATTRS provifes the url text after 'start?'.
+    """
+    results = []
+    i = 0
+    while len(results) < maximum: # and still parsible
+        page = requests.get(url).content
+        soup = BeautifulSoup(page, 'html.parser')
+        body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+        businesses = body_wrap.select('#super-container')[0].select('.container')[0]
+        businesses = businesses.select('.search-results-block')[0]
+        businesses = businesses.select('.column-alpha')[0].select('.indexed-biz-archive')[0]
+        businesses = businesses.select('.search-results-content')[0]
+        businesses = businesses.select('ul .regular-search-result')
+
+        for biz in businesses:
+            r = biz.select('.natural-search-result')[0].select('.biz-listing-large')[0]
+            r = r.select('.main-attributes')[0].select('.media-block--12')[0]
+            r = r.select('.media-story')[0]
+
+            rating = r.select('.biz-rating')[0].select('.rating-large')[0].i
+            try:
+                stars = str(rating).split(' ')[2].split('_')[1].strip('"')
+                if int(quality) <= int(stars):
+                    # find names of businesses?
+                    link = URL + r.h3.span.select('a[href]')[0]['href']
+                    results.append(link)
+            except:
+                pass
+
+            # DO MORE WORK FOR REVIEWS
+
+        i += 10
+        url = URL + search + '&start=' + str(i) + attrs
+
+    bound = max(len(results), maximum)
+    if bound > maximum:
+        bound = maximum
+    return results[:bound]
+
+def reviews_f(url, reviews):
+    """Looks at URL to find all results matching REVIEWS."""
     page = requests.get(url).content
     soup = BeautifulSoup(page, 'html.parser')
     body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
@@ -68,24 +110,7 @@ def quality_f(url, quality):
     businesses = businesses.select('.search-results-content')[0]
     businesses = businesses.select('ul .regular-search-result')
 
-    results = []
-    for biz in businesses:
-        r = biz.select('.natural-search-result')[0].select('.biz-listing-large')[0]
-        r = r.select('.main-attributes')[0].select('.media-block--12')[0]
-        r = r.select('.media-story')[0]
 
-        rating = r.select('.biz-rating')[0].select('.rating-large')[0].i
-        try:
-            stars = str(rating).split(' ')[2].split('_')[1].strip('"')
-            if int(quality) <= int(stars):
-                link = URL + r.h3.span.select('a[href]')[0]['href']
-                result.append(link)
-        except:
-            continue
-
-def reviews_f(results, reviews_range):
-    """Looks at RESULTS to find all results matching REVIEWS_RANGE."""
-    # change RESULTS to next SOUP page?
 
 
 def main():
@@ -179,15 +204,16 @@ def main():
                 if lower_bound < 0 or lower_bound > upper_bound:
                     j += 1
                     continue
-                new_url = new_url + '&start=0&attrs='
+                price_url = '&attrs='
                 if upper_bound <= 10:
-                    new_url = new_url + 'RestaurantsPriceRange2.1,'
+                    price_url = price_url + 'RestaurantsPriceRange2.1,'
                 if upper_bound <= 30:
-                    new_url = new_url + 'RestaurantsPriceRange2.2,'
+                    price_url = price_url + 'RestaurantsPriceRange2.2,'
                 if upper_bound <= 60:
-                    new_url = new_url + 'RestaurantsPriceRange2.3,'
+                    price_url = price_url + 'RestaurantsPriceRange2.3,'
                 if lower_bound > 60:
-                    new_url = new_url + 'RestaurantsPriceRange2.4,'
+                    price_url = price_url + 'RestaurantsPriceRange2.4,'
+                new_url = new_url + '&start=0' + price_url
             except:
                 j += 1
                 continue
@@ -196,21 +222,46 @@ def main():
 
             if 'No Results' in result:
                 price = proceed('q', 0)
+                if price != True:
+                    j = 0
 
         if price == 'start':
             location = None
             i = 0
             continue
 
-        quality = None
+        num_results = None
         k = 0
-        # old_url = new_url
-        while quality != True:
+        while num_results != True:
             if k == 0:
+                num_results = input('What is the maximum number of results you would '
+                    + 'like to show?\n>> ')
+            elif k > 0:
+                num_results = input('There seems to be an error; please enter a valid '
+                    + 'number.\n>> ')
+
+            if startquit(num_results) == 'start':
+                break
+
+            try:
+                int(num_results)
+            except:
+                num_results = None
+                k += 1
+                continue
+
+        if num_results == 'start':
+            location = None
+            i = 0
+            continue
+
+        quality = None
+        l = 0
+        while quality != True:
+            if l == 0:
                 quality = input('What is your target minimum rating? Please enter '
                     + 'a number 1 through 4.\n>> ')
-            elif k > 0:
-                # new_url = old_url
+            elif l > 0:
                 quality = input('There seems to be an error; please enter a number '
                     + '1 through 4.\n>> ')
 
@@ -218,16 +269,14 @@ def main():
                 break
 
             try:
-                if quality < 1 or quality > 4:
-                    k += 1
+                if int(quality) < 1 or int(quality) > 4:
+                    quality = None
+                    l += 1
                     continue
             except:
-                k += 1
+                quality = None
+                l += 1
                 continue
-
-            result_lst = quality_f(new_url, quality) # links to businesses
-            if len(result_lst) == 0:
-                quality = proceed('q', 0)
 
         if quality == 'start':
             location = None
@@ -235,12 +284,12 @@ def main():
             continue
 
         reviews = None
-        l = 0
+        m = 0
         while reviews != True:
-            if l == 0:
+            if m == 0:
                 reviews = input('At least how many customer reviews would you like '
                     + 'on this request?\n>> ')
-            elif l > 0:
+            elif m > 0:
                 reviews = input('There seems to be an error; please enter a valid '
                     + 'number.\n>> ')
 
@@ -248,33 +297,28 @@ def main():
                 break
 
             try:
-                if reviews < 0:
-                    l += 1
+                if int(reviews) < 0:
+                    reviews = None
+                    m += 1
                     continue
-            except: # fix?
-                l += 1
+            except:
+                reviews = None
+                m += 1
                 continue
-            # result = reviews_f(result, reviews)
-            # or--> SOUP = new page with reviews
-            if result ISVALID:
-                if result ISNULL:
-                    reviews = proceed('q', 0)
+
+            sr_url = '/search?' + search_url + '&' + loc_url
+            result_lst = quality_f(new_url, quality, reviews, num_results, sr_url,
+                price_url)
+            if len(result_lst) == 0:
+                reviews = proceed('q', 0)
+                if reviews != True:
+                    m = 0
 
         if reviews == 'start':
             location = None
             i = 0
             continue
 
-        num_results = input('What is the maximum number of results you would like '
-            + 'to show?\n>> ')
-        if startquit(num_results) == 'start':
-            location = None
-            i = 0
-            continue
-
-        # for loop to show this many results
-        # max(num_results - 1, len(results_lst))
-
-    return result #fixme
+    return result_lst #fixme: open up a file with information
 
 main()
