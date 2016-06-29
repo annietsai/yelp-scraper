@@ -71,21 +71,24 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
         page = requests.get(url).content
         soup = BeautifulSoup(page, 'html.parser')
         main_content = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+
+        businesses = main_content.select('#super-container')[0]\
+            .select('.container')[0].select('.search-results-block')[0]\
+            .select('.column-alpha')[0].select('.indexed-biz-archive')[0]\
+            .select('.search-results-content')[0]
         try:
-            businesses = main_content.select('#super-container')[0]\
-                .select('.container')[0].select('.search-results-block')[0]\
-                .select('.column-alpha')[0].select('.indexed-biz-archive')[0]\
-                .select('.search-results-content')[0].select('ul .regular-search-result')
-        except:
+            businesses = businesses.select('.no-results')[0]
             break
+        except:
+            businesses = businesses.select('ul .regular-search-result')
 
         for biz in businesses:
             biz_info = biz.select('.natural-search-result')[0]\
                 .select('.biz-listing-large')[0].select('.main-attributes')[0]\
                 .select('.media-block--12')[0].select('.media-story')[0]
 
-            rating = biz_info.select('.biz-rating')[0].select('.rating-large')[0].i
             try:
+                rating = biz_info.select('.biz-rating')[0].select('.rating-large')[0].i
                 stars = str(rating).split(' ')[2].split('_')[1].strip('"')
                 if int(quality) <= int(stars):
                     biz_rating = biz_info.select('.biz-rating')[0].span.getText()
@@ -111,13 +114,12 @@ def main():
 
     print('*** Welcome to Yelp Scraper, your Yelp-search aficionado. ***')
     time.sleep(1)
-    print('At any time if you would like to restart your search, enter "start" or "-s".')
-    time.sleep(1)
-    print('If you would like to quit, enter "quit" or "-q".')
-    time.sleep(1)
+    print('At any time if you would like to restart your search, enter "start"')
+    print('or "-s". If you would like to quit, enter "quit" or "-q".')
+    time.sleep(1.5)
 
-    location = None
     i = 0
+    location = None
     while location is None:
         if i == 0:
             location = input('What is your location? Input [city, state] for '
@@ -153,6 +155,7 @@ def main():
             search = input('What are you searching for?\n>> ')
 
             if startquit(search) == 'start':
+                search = 'start'
                 break
 
             search = re.sub('\s+', '+', search)
@@ -165,22 +168,23 @@ def main():
             search = proceed(0)
 
         if search == 'start':
-            location = None
             i = 0
+            location = None
             continue
 
-        price = None
         j = 0
+        price = None
         while price is None:
             if j == 0:
                 print('What is your price range? Please enter input in the format')
                 price = input('"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
             else:
-                new_url = URL + 'search?' + search_url + '&' + loc_url
+                new_url = URL + '/search?' + search_url + '&' + loc_url
                 price = input('There seems to be an error; please enter a valid price '
                     + 'range.\n>> ')
 
             if startquit(price) == 'start':
+                price = 'start'
                 break
 
             price_lst = []
@@ -196,22 +200,22 @@ def main():
                 lower_bound = int(price_lst[0])
                 upper_bound = int(price_lst[1])
                 if lower_bound < 0 or lower_bound > upper_bound:
-                    price = None
                     j += 1
+                    price = None
                     continue
                 price_url = '&attrs='
                 if lower_bound <= 10:
                     price_url = price_url + 'RestaurantsPriceRange2.1,'
-                if upper_bound <= 30:
+                if upper_bound > 10 and lower_bound <= 30:
                     price_url = price_url + 'RestaurantsPriceRange2.2,'
-                if upper_bound <= 60:
+                if upper_bound > 30 and lower_bound <= 60:
                     price_url = price_url + 'RestaurantsPriceRange2.3,'
-                if lower_bound > 60:
+                if upper_bound > 60:
                     price_url = price_url + 'RestaurantsPriceRange2.4,'
                 new_url = new_url + '&start=0' + price_url
             except:
-                price = None
                 j += 1
+                price = None
                 continue
 
             result = result_soup(new_url, 'price')
@@ -222,12 +226,12 @@ def main():
                     j = 0
 
         if price == 'start':
-            location = None
             i = 0
+            location = None
             continue
 
-        num_results = None
         k = 0
+        num_results = None
         while num_results is None:
             if k == 0:
                 num_results = input('What is the maximum number of results you would '
@@ -237,6 +241,7 @@ def main():
                     + 'number.\n>> ')
 
             if startquit(num_results) == 'start':
+                num_results = 'start'
                 break
 
             try:
@@ -247,12 +252,12 @@ def main():
                 continue
 
         if num_results == 'start':
-            location = None
             i = 0
+            location = None
             continue
 
-        quality = None
         l = 0
+        quality = None
         while quality is None:
             if l == 0:
                 quality = input('What is your target minimum rating? Please enter '
@@ -262,25 +267,26 @@ def main():
                     + '1 through 4.\n>> ')
 
             if startquit(quality) == 'start':
+                quality = 'start'
                 break
 
             try:
                 if int(quality) < 1 or int(quality) > 4:
-                    quality = None
                     l += 1
+                    quality = None
                     continue
             except:
-                quality = None
                 l += 1
+                quality = None
                 continue
 
         if quality == 'start':
-            location = None
             i = 0
+            location = None
             continue
 
-        reviews = None
         m = 0
+        reviews = None
         while reviews is None:
             if m == 0:
                 reviews = input('At least how many customer reviews would you like '
@@ -290,29 +296,30 @@ def main():
                     + 'number.\n>> ')
 
             if startquit(reviews) == 'start':
+                reviews = 'start'
                 break
 
             try:
                 if int(reviews) < 0:
-                    reviews = None
                     m += 1
+                    reviews = None
                     continue
             except:
-                reviews = None
                 m += 1
+                reviews = None
                 continue
 
-            sr_url = '/search?' + search_url + '&' + loc_url
-            result_lst = quality_f(new_url, quality, reviews, num_results, sr_url,
-                price_url)
+            search_location_url = '/search?' + search_url + '&' + loc_url
+            result_lst = quality_f(new_url, quality, reviews, num_results,
+                search_location_url, price_url)
             if len(result_lst) == 0:
                 reviews = proceed(0)
                 if reviews is None:
                     m = 0
 
         if reviews == 'start':
-            location = None
             i = 0
+            location = None
             continue
 
     print('Found ' + str(len(result_lst)) + ' results.')
