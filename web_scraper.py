@@ -6,6 +6,82 @@ import re
 
 URL = 'http://www.yelp.com'
 
+def proceed(cont, counter):
+    """Determines whether or not a search query continues. CONT determines
+    whether or not the user wants to continue the request. COUNTER determines
+    which question to prompt the user with.
+    """
+    if counter == 0:
+        cont = input('There seem to be no matches to your request. '
+            + 'Try again? Enter [y/n].\n>> ')
+    elif counter > 0:
+        cont = input('Please enter [y/n].\n>> ')
+
+    if cont == 'y':
+        return None
+    elif cont == 'n':
+        restart = 'q'
+        while restart != 'y' and restart != 'n':
+            restart = input('Would you like to restart your search?\n>> ')
+            if restart == 'y':
+                return 'start'
+            elif restart == 'n':
+                sys.exit()
+            else:
+                print('Please enter [y/n].')
+    else:
+        return proceed(cont, counter + 1)
+
+def startquit(string):
+    """Checks if the user inputted a STRING to restart the search or quit."""
+    if string == 'start' or string == '-s':
+        return 'start'
+    elif string == 'quit' or string == '-q':
+        sys.exit()
+    return None
+
+def result_soup(url, query):
+    """Takes in a string URL and turns it into soup, which is then dissected
+    to find particular strings. The QUERY determines which path to take.
+    """
+    page = requests.get(url).content
+    soup = BeautifulSoup(page, 'html.parser')
+    body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+    if query == 'location':
+        result = body_wrap.select('#super-container')[0].select('.container')[0]
+        result = result.select('.clearfix')[0].select('.column-alpha')[0]
+        result = result.select('.content')[0].h2.getText()
+    else:
+        result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
+        result = result.select('.search-page-top')[0].select('.column-alpha')[0]
+        result = result.select('.clearfix')[0].h1.getText()
+    return result
+
+def quality_f(url, quality):
+    """Looks at URL to find all results matching QUALITY."""
+    page = requests.get(url).content
+    soup = BeautifulSoup(page, 'html.parser')
+    body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
+    businesses = body_wrap.select('#super-container')[0].select('.container')[0]
+    businesses = businesses.select('.search-results-block')[0]
+    businesses = businesses.select('.column-alpha')[0].select('.indexed-biz-archive')[0]
+    businesses = businesses.select('.search-results-content')[0]
+    businesses = businesses.select('ul .regular-search-result')
+
+    results = []
+    for biz in businesses:
+        r = biz.select('.natural-search-result')[0].select('.biz-listing-large')[0]
+        r = r.select('.main-attributes')[0].select('.media-block--12')[0]
+        r = r.select('.media-story')[0].select('.biz-rating')[0]
+        r = r.select('.rating-large')[0].i
+        if str(quality) in str(r): # need str(quality)? pass in str??
+
+
+def reviews_f(results, reviews_range):
+    """Looks at RESULTS to find all results matching REVIEWS_RANGE."""
+    # change RESULTS to next SOUP page?
+
+
 def main():
     """Main function for Yelp Scraper."""
 
@@ -13,60 +89,6 @@ def main():
     print('At any time if you would like to restart your search, enter "start"')
     print('or "-s". If you would like to quit, enter "quit" or "-q".')
     time.sleep(1.5)
-
-    def proceed(cont, counter):
-        """Helper function that determines whether or not a search query continues.
-        CONT determines whether or not the user wants to continue the request.
-        COUNTER determines which question to prompt the user with.
-        """
-        if counter == 0:
-            cont = input('There seem to be no matches to your request. '
-                + 'Try again? Enter [y/n].\n>> ')
-        elif counter > 0:
-            cont = input('Please enter [y/n].\n>> ')
-
-        if cont == 'y':
-            return None
-        elif cont == 'n':
-            restart = 'q'
-            while restart != 'y' and restart != 'n':
-                restart = input('Would you like to restart your search?\n>> ')
-                if restart == 'y':
-                    return 'start'
-                elif restart == 'n':
-                    sys.exit()
-                else:
-                    print('Please enter [y/n].')
-        else:
-            return proceed(cont, counter + 1)
-
-    def startquit(string):
-        """Helper function that checks if the user inputted a STRING to restart the
-        search or quit.
-        """
-        if string == 'start' or string == '-s':
-            return 'start'
-        elif string == 'quit' or string == '-q':
-            sys.exit()
-        return None
-
-    def result_soup(url, query):
-        """Helper function that takes in a string URL and turns it into soup, which
-        is then dissected to find particular strings. The QUERY determines which path
-        to take.
-        """
-        page = requests.get(url).content
-        soup = BeautifulSoup(page, 'html.parser')
-        body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
-        if query == 'location':
-            result = body_wrap.select('#super-container')[0].select('.container')[0]
-            result = result.select('.clearfix')[0].select('.column-alpha')[0]
-            result = result.select('.content')[0].h2.getText()
-        else:
-            result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
-            result = result.select('.search-page-top')[0].select('.column-alpha')[0]
-            result = result.select('.clearfix')[0].h1.getText()
-        return result
 
     # fix?? turn into function calls rather than huge while loop in main()
     location = None
@@ -176,13 +198,13 @@ def main():
 
         quality = None
         k = 0
-        old_url = new_url
+        # old_url = new_url
         while quality != True:
             if k == 0:
                 quality = input('What is your target minimum rating? Please enter '
                     + 'a number 1 through 4.\n>> ')
             elif k > 0:
-                new_url = old_url
+                # new_url = old_url
                 quality = input('There seems to be an error; please enter a number '
                     + '1 through 4.\n>> ')
 
@@ -196,13 +218,10 @@ def main():
             except:
                 k += 1
                 continue
-            # result = quality_f(result, quality)
-            # or--> SOUP = new page with quality
-            if result ISVALID:
-                if result ISNULL:
-                    quality = proceed('q', 0)
-                else:
-                    # put titles into a list?
+
+            result_lst = quality_f(new_url, quality) # links to businesses
+            if len(result_lst) == 0:
+                quality = proceed('q', 0)
 
         if quality == 'start':
             location = None
@@ -250,70 +269,6 @@ def main():
         # for loop to show this many results
         # max(num_results - 1, len(results_lst))
 
-    return result
-    
-# def location_f(counter):
-#     """Finds the location. Uses COUNTER to determine what to prompt user."""
-#     if counter == 0:
-#         location = input('What is your location? Input [city, state] for '
-#             + 'best results.\n>> ')
-#     elif counter > 0:
-#         location = input('There seems to be an error; please enter a valid '
-#             + 'location.\n>> ')
-#     else:
-#         print('There are multiple locations matching your search. Please try')
-#         location = input('inputting [city, state] or [city, country].\n>> ')
-
-#     if startquit(location) == 'start':
-#         return location_f(0)
-
-#     location = re.sub('\s+', '+', location)
-#     loc_url = 'find_loc=' + location
-#     new_url = URL + 'search?' + loc_url
-#     page = requests.get(new_url).content # turn into a function (handle repeats)
-#     soup = BeautifulSoup(page, 'html.parser')
-#     body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
-
-#     result = body_wrap.select('#super-container')[0].select('.container')[0]
-#     result = result.select('.clearfix')[0].select('.column-alpha')[0]
-#     result = result.select('.content')[0].h2.getText()
-#     if 'Sorry' in result:
-#         return location_f(10)
-#     elif 'found multiple' in result:
-#         return location_f(-10)
-
-def quality_f(results, quality_range):
-    """Looks at RESULTS to find all results matching QUALITY_RANGE."""
-    # change RESULTS to next SOUP page?
-
-
-def reviews_f(results, reviews_range):
-    """Looks at RESULTS to find all results matching REVIEWS_RANGE."""
-    # change RESULTS to next SOUP page?
-
+    return result #fixme
 
 main()
-
-            # while cont != 'y' and cont != 'n':
-            #     if j == 0:
-            #         cont = input('There seem to be no matches to your request. Try '
-            #             + 'again? Enter [y/n].\n>> ')
-            #     if j > 0:
-            #         cont = input('Please enter [y/n].\n>> ')
-            #     if cont == 'y':
-            #         search = False
-            #         break
-            #     elif cont == 'n':
-            #         restart = 'q'
-            #         while restart != 'y' and restart != 'n':
-            #             restart = input('Would you like to restart your search?\n>> ')
-            #             if restart == 'y':
-            #                 location = False
-            #                 search = True
-            #                 break
-            #             elif restart == 'n':
-            #                 sys.exit()
-            #             else:
-            #                 print('Please enter [y/n].')
-            #     else:
-            #         j += 1
