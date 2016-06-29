@@ -99,20 +99,6 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
         bound = maximum
     return results[:bound]
 
-def reviews_f(url, reviews):
-    """Looks at URL to find all results matching REVIEWS."""
-    page = requests.get(url).content
-    soup = BeautifulSoup(page, 'html.parser')
-    body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
-    businesses = body_wrap.select('#super-container')[0].select('.container')[0]
-    businesses = businesses.select('.search-results-block')[0]
-    businesses = businesses.select('.column-alpha')[0].select('.indexed-biz-archive')[0]
-    businesses = businesses.select('.search-results-content')[0]
-    businesses = businesses.select('ul .regular-search-result')
-
-
-
-
 def main():
     """Main function for Yelp Scraper."""
 
