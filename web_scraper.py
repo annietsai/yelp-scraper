@@ -117,7 +117,6 @@ def main():
     print('or "-s". If you would like to quit, enter "quit" or "-q".')
     time.sleep(1.5)
 
-    # fix?? turn into function calls rather than huge while loop in main()
     location = None
     i = 0
     while location is None:
