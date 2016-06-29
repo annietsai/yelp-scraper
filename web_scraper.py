@@ -135,7 +135,7 @@ def main():
 
         location = re.sub('\s+', '+', location)
         loc_url = 'find_loc=' + location
-        new_url = URL + 'search?' + loc_url
+        new_url = URL + '/search?' + loc_url
         result = result_soup(new_url, 'location')
 
         if 'Sorry' in result:
