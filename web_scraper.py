@@ -4,6 +4,7 @@ import requests
 import time
 import sys
 import re
+import pdb
 
 URL = 'http://www.yelp.com'
 
@@ -50,8 +51,11 @@ def result_soup(url, query):
     body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
     if query == 'location':
         result = body_wrap.select('#super-container')[0].select('.container')[0]
-        result = result.select('.clearfix')[0].select('.column-alpha')[0]
-        result = result.select('.content')[0].h2.getText()
+        result = result.select('.search-exception')[0].select('.column-alpha')[0]
+        try:
+            result = result.select('.content')[0].h2.getText()
+        except:
+            result = 'ok'
     else:
         result = body_wrap.select('.top-shelf-grey')[0].select('.content-container')[0]
         result = result.select('.search-page-top')[0].select('.column-alpha')[0]
@@ -65,7 +69,7 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
     """
     results = []
     i = 0
-    while len(results) < maximum:
+    while len(results) < int(maximum):
         page = requests.get(url).content
         soup = BeautifulSoup(page, 'html.parser')
         body_wrap = soup.body.select('#wrap')[0].select('.main-content-wrap--full')[0]
@@ -91,8 +95,7 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
                     num = rev.split(' ')
                     num[:] = (value for value in num if value != '')
 
-                    if int(num[1]) >= reviews:
-                        # return dictionary name:link?
+                    if int(num[1]) >= int(reviews):
                         link = URL + r.h3.span.select('a[href]')[0]['href']
                         results.append(link)
             except:
@@ -101,9 +104,9 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
         i += 10
         url = URL + search + '&start=' + str(i) + attrs
 
-    bound = max(len(results), maximum)
-    if bound > maximum:
-        bound = maximum
+    bound = max(len(results), int(maximum))
+    if bound > int(maximum):
+        bound = int(maximum)
     return results[:bound]
 
 def main():
@@ -117,7 +120,7 @@ def main():
     # fix?? turn into function calls rather than huge while loop in main()
     location = None
     i = 0
-    while location != True:
+    while location is None:
         if i == 0:
             location = input('What is your location? Input [city, state] for '
                 + 'best results.\n>> ')
@@ -148,7 +151,7 @@ def main():
             continue
 
         search = None
-        while search != True:
+        while search is None:
             search = input('What are you searching for?\n>> ')
 
             if startquit(search) == 'start':
@@ -159,7 +162,7 @@ def main():
             new_url = URL + '/search?' + search_url + '&' + loc_url
             result = result_soup(new_url, 'search')
 
-            if 'Best' in result:
+            if 'No Results' not in result:
                 break
             search = proceed('q', 0)
 
@@ -170,7 +173,7 @@ def main():
 
         price = None
         j = 0
-        while price != True:
+        while price is None:
             if j == 0:
                 print('What is your price range? Please enter input in the format')
                 price = input('"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
@@ -195,10 +198,11 @@ def main():
                 lower_bound = int(price_lst[0])
                 upper_bound = int(price_lst[1])
                 if lower_bound < 0 or lower_bound > upper_bound:
+                    price = None
                     j += 1
                     continue
                 price_url = '&attrs='
-                if upper_bound <= 10:
+                if lower_bound <= 10:
                     price_url = price_url + 'RestaurantsPriceRange2.1,'
                 if upper_bound <= 30:
                     price_url = price_url + 'RestaurantsPriceRange2.2,'
@@ -208,6 +212,7 @@ def main():
                     price_url = price_url + 'RestaurantsPriceRange2.4,'
                 new_url = new_url + '&start=0' + price_url
             except:
+                price = None
                 j += 1
                 continue
 
@@ -215,7 +220,7 @@ def main():
 
             if 'No Results' in result:
                 price = proceed('q', 0)
-                if price != True:
+                if price is None:
                     j = 0
 
         if price == 'start':
@@ -225,7 +230,7 @@ def main():
 
         num_results = None
         k = 0
-        while num_results != True:
+        while num_results is None:
             if k == 0:
                 num_results = input('What is the maximum number of results you would '
                     + 'like to show?\n>> ')
@@ -250,7 +255,7 @@ def main():
 
         quality = None
         l = 0
-        while quality != True:
+        while quality is None:
             if l == 0:
                 quality = input('What is your target minimum rating? Please enter '
                     + 'a number 1 through 4.\n>> ')
@@ -278,7 +283,7 @@ def main():
 
         reviews = None
         m = 0
-        while reviews != True:
+        while reviews is None:
             if m == 0:
                 reviews = input('At least how many customer reviews would you like '
                     + 'on this request?\n>> ')
@@ -304,7 +309,7 @@ def main():
                 price_url)
             if len(result_lst) == 0:
                 reviews = proceed('q', 0)
-                if reviews != True:
+                if reviews is None:
                     m = 0
 
         if reviews == 'start':
