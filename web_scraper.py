@@ -110,9 +110,11 @@ def main():
     """Main function for Yelp Scraper."""
 
     print('*** Welcome to Yelp Scraper, your Yelp-search aficionado. ***')
-    print('At any time if you would like to restart your search, enter "start"')
-    print('or "-s". If you would like to quit, enter "quit" or "-q".')
-    time.sleep(1.5)
+    time.sleep(1)
+    print('At any time if you would like to restart your search, enter "start" or "-s".')
+    time.sleep(1)
+    print('If you would like to quit, enter "quit" or "-q".')
+    time.sleep(1)
 
     location = None
     i = 0
@@ -313,6 +315,7 @@ def main():
             i = 0
             continue
 
+    print('Found ' + str(len(result_lst)) + ' results.')
     for r in result_lst:
         webbrowser.open(r)
 
