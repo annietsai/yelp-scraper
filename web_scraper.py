@@ -72,10 +72,16 @@ def quality_f(url, quality):
     for biz in businesses:
         r = biz.select('.natural-search-result')[0].select('.biz-listing-large')[0]
         r = r.select('.main-attributes')[0].select('.media-block--12')[0]
-        r = r.select('.media-story')[0].select('.biz-rating')[0]
-        r = r.select('.rating-large')[0].i
-        if str(quality) in str(r): # need str(quality)? pass in str??
+        r = r.select('.media-story')[0]
 
+        rating = r.select('.biz-rating')[0].select('.rating-large')[0].i
+        try:
+            stars = str(rating).split(' ')[2].split('_')[1].strip('"')
+            if int(quality) <= int(stars):
+                link = URL + r.h3.span.select('a[href]')[0]['href']
+                result.append(link)
+        except:
+            continue
 
 def reviews_f(results, reviews_range):
     """Looks at RESULTS to find all results matching REVIEWS_RANGE."""
