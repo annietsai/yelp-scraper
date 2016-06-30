@@ -146,10 +146,10 @@ def main():
     while location is None:
         if i == 0:
             location = input('What is your location? Input [city, state] for '
-                + 'best results.\n>> ')
+                           + 'best results.\n>> ')
         elif i > 0:
             location = input('There seems to be an error; please enter a valid '
-                + 'location.\n>> ')
+                           + 'location.\n>> ')
         else:
             print('There are multiple locations matching your search. Please try')
             location = input('inputting [city, state] or [city, country].\n>> ')
@@ -204,7 +204,7 @@ def main():
             else:
                 new_url = URL + SEARCH + search_url + '&' + loc_url
                 price = input('There seems to be an error; please enter a valid price '
-                    + 'range.\n>> ')
+                            + 'range.\n>> ')
 
             if startquit(price) == START:
                 price = START
@@ -263,10 +263,10 @@ def main():
         while num_results is None:
             if k == 0:
                 num_results = input('What is the maximum number of results you would '
-                    + 'like to show?\n>> ')
+                                  + 'like to show?\n>> ')
             else:
                 num_results = input('There seems to be an error; please enter a valid '
-                    + 'number.\n>> ')
+                                  + 'number.\n>> ')
 
             if startquit(num_results) == START:
                 num_results = START
@@ -288,10 +288,10 @@ def main():
         while quality is None:
             if l == 0:
                 quality = input('What is your target minimum rating? Please enter '
-                    + 'a number 1 through 4.\n>> ')
+                              + 'a number 1 through 4.\n>> ')
             else:
                 quality = input('There seems to be an error; please enter a number '
-                    + '1 through 4.\n>> ')
+                              + '1 through 4.\n>> ')
 
             if startquit(quality) == START:
                 quality = START
@@ -338,7 +338,7 @@ def main():
 
             search_location_url = SEARCH + search_url + '&' + loc_url
             result_lst = quality_f(new_url, int(quality), int(reviews), int(num_results),
-                search_location_url, price_url)
+                                   search_location_url, price_url)
             if len(result_lst) == 0:
                 reviews = proceed(0)
                 if reviews is None:
