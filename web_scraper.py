@@ -70,7 +70,7 @@ def result_soup(url, query):
                                  .select('.column-alpha')[0]\
                                  .select('.content')[0].h2.getText()
         except:
-            result = 'ok'
+            result = None
     else:
         result = content.select('.top-shelf-grey')[0]\
                              .select('.content-container')[0]\
@@ -113,9 +113,9 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
                 if quality <= stars:
                     biz_rating_text_lst = biz_info.select('.biz-rating')[0]\
                                                   .span.getText().split(' ')
-                    biz_rating_text_lst[:] = (
+                    biz_rating_text_lst = [
                         value for value in biz_rating_text_lst if value != ''
-                        )
+                        ]
                     biz_rating = int(biz_rating_text_lst[1])
 
                     if biz_rating >= reviews:
@@ -199,8 +199,8 @@ def main():
         price = None
         while price is None:
             if j == 0:
-                print('What is your price range? Please enter input in the format')
-                price = input('"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
+                price = input('What is your price range? Please enter input in the '
+                            + 'format\n"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
             else:
                 new_url = URL + SEARCH + search_url + '&' + loc_url
                 price = input('There seems to be an error; please enter a valid price '
@@ -221,8 +221,8 @@ def main():
                     continue
                 price_text_lst = price.split('-')
 
-            price_text_lst = ([value for value in price_text_lst if value != ''])
-            price_text_lst = ([p.replace('$', '') for p in price_text_lst])
+            price_text_lst = [p for p in price_text_lst if p != '']
+            price_text_lst = [p.replace('$', '') for p in price_text_lst]
 
             try:
                 lower_bound = int(price_text_lst[0])
