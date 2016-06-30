@@ -11,8 +11,9 @@ START = 'start'
 START_SEARCH_AT = '&start='
 
 def proceed(counter):
-    """Determines whether or not a search query continues. COUNTER determines
-    which question to prompt the user with.
+    """Determines whether or not a search query continues, restarts, or quits.
+    Returns None to continue, 'start' to restart, or exits program to quit.
+    COUNTER determines which question to prompt the user with.
     """
     if counter == 0:
         try_again = input('There seem to be no matches to your request. '
@@ -41,7 +42,9 @@ def proceed(counter):
         return proceed(counter + 1)
 
 def startquit(string):
-    """Checks if the user inputted a STRING to restart the search or quit."""
+    """Checks if the user inputted a STRING to restart the search or quit.
+    Returns None to continue, 'start' to restart, or exits program to quit.
+    """
     if string == 'start' or string == '-s':
         return START
     elif string == 'quit' or string == '-q':
@@ -49,8 +52,8 @@ def startquit(string):
     return None
 
 def main_content(url):
-    """Takes in a URL and finds the path to the main content of the webpage
-    corresponding that URL.
+    """Takes in a URL and parses HTML for corresponding webpage. Returns the
+    path to the main content of the webpage.
     """
     page = requests.get(url).content
     soup = BeautifulSoup(page, 'html.parser')
@@ -85,15 +88,19 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
     the url string before '/start?' and ATTRS provifes the url string after '/start?'.
     """
     results = []
-    i = 0
+    start_at_item = 0
     while len(results) < maximum:
         content = main_content(url)
-        businesses = content.select('#super-container')[0]\
-                                 .select('.container')[0]\
-                                 .select('.search-results-block')[0]\
-                                 .select('.column-alpha')[0]\
-                                 .select('.indexed-biz-archive')[0]\
-                                 .select('.search-results-content')[0]
+        try:
+            businesses = content.select('#super-container')[0]\
+                                     .select('.container')[0]\
+                                     .select('.search-results-block')[0]\
+                                     .select('.column-alpha')[0]\
+                                     .select('.indexed-biz-archive')[0]\
+                                     .select('.search-results-content')[0]
+        except:
+            break
+
         try:
             businesses = businesses.select('.no-results')[0]
             break
@@ -111,12 +118,12 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
                 rating = biz_info.select('.biz-rating')[0].select('.rating-large')[0].i
                 stars = int(str(rating).split(' ')[2].split('_')[1].strip('"'))
                 if quality <= stars:
-                    biz_rating_text_lst = biz_info.select('.biz-rating')[0]\
-                                                  .span.getText().split(' ')
-                    biz_rating_text_lst = [
-                        value for value in biz_rating_text_lst if value != ''
+                    biz_rating_str_lst = biz_info.select('.biz-rating')[0]\
+                                                 .span.getText().split(' ')
+                    biz_rating_str_lst = [
+                        value for value in biz_rating_str_lst if value != ''
                         ]
-                    biz_rating = int(biz_rating_text_lst[1])
+                    biz_rating = int(biz_rating_str_lst[1])
 
                     if biz_rating >= reviews:
                         link = URL + biz_info.h3.span.select('a[href]')[0]['href']
@@ -124,8 +131,8 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
             except:
                 pass
 
-        i += 10
-        url = URL + search + START_SEARCH_AT + str(i) + attrs
+        start_at_item += 10
+        url = URL + search + START_SEARCH_AT + str(start_at_item) + attrs
 
     bound = max(len(results), maximum)
     if bound > maximum:
