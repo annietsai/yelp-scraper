@@ -70,7 +70,7 @@ def result_soup(url, query):
                                  .select('.column-alpha')[0]\
                                  .select('.content')[0].h2.getText()
         except:
-            result = None
+            result = ''
     else:
         result = content.select('.top-shelf-grey')[0]\
                              .select('.content-container')[0]\
