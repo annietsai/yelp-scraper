@@ -17,9 +17,15 @@ def proceed(counter):
     """
     if counter == 0:
         try_again = input('There seem to be no matches to your request. '
-                        + 'Try again? Enter [y/n].\n>> ')
-    else:
+                        + 'Try again?\nEnter [y/n].\n>> ')
+    elif count > 0:
         try_again = input('Please enter [y/n].\n>> ')
+    else:
+        print('There seem to be no matches to your request. Here are some\n'
+            + 'suggestions on how to improve your search:\n- Search with a '
+            + 'broader price range\n- Search with a lower target minimum '
+            + 'rating\n- Search with a lower minimum of customer reviews')
+        try_again = 'n'
 
     if try_again == 'y':
         return None
@@ -40,6 +46,14 @@ def proceed(counter):
                 i += 1
     else:
         return proceed(counter + 1)
+
+def string_url_converter(query, string):
+    """Takes in a QUERY and converts all spaces to '+'. Returns the string
+    'find_STRING=' with the converted query.
+    """
+    converted_query = re.sub('\s+', '+', query)
+    find_url = 'find_' + string + '=' + converted_query
+    return find_url
 
 def startquit(string):
     """Checks if the user inputted a STRING to restart the search or quit.
@@ -102,7 +116,7 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
             break
 
         try:
-            businesses = businesses.select('.no-results')[0]
+            businesses.select('.no-results')[0]
             break
         except:
             businesses = businesses.select('ul .regular-search-result')
@@ -158,17 +172,17 @@ def main():
             location = input('There seems to be an error; please enter a valid '
                            + 'location.\n>> ')
         else:
-            print('There are multiple locations matching your search. Please try')
-            location = input('inputting [city, state] or [city, country].\n>> ')
+            location = input('There are multiple locations matching your search. '
+                           + 'Please try\ninputting [city, state] or [city, country].'
+                           + '\n>> ')
 
         if startquit(location) == START:
             i = 0
             location = None
             continue
 
-        location = re.sub('\s+', '+', location)
-        loc_url = 'find_loc=' + location
-        new_url = URL + SEARCH + loc_url
+        location_url = string_url_converter(location, 'loc')
+        new_url = URL + SEARCH + location_url
         result = result_soup(new_url, 'location')
 
         if 'Sorry' in result:
@@ -188,9 +202,8 @@ def main():
                 search = START
                 break
 
-            search = re.sub('\s+', '+', search)
-            search_url = 'find_desc=' + search
-            new_url = URL + SEARCH + search_url + '&' + loc_url
+            search_url = string_url_converter(search, 'desc')
+            new_url = URL + SEARCH + search_url + '&' + location_url
             result = result_soup(new_url, 'search')
 
             if 'No Results' not in result:
@@ -209,7 +222,7 @@ def main():
                 price = input('What is your price range? Please enter input in the '
                             + 'format\n"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
             else:
-                new_url = URL + SEARCH + search_url + '&' + loc_url
+                new_url = URL + SEARCH + search_url + '&' + location_url
                 price = input('There seems to be an error; please enter a valid price '
                             + 'range.\n>> ')
 
@@ -295,7 +308,7 @@ def main():
         while quality is None:
             if l == 0:
                 quality = input('What is your target minimum rating? Please enter '
-                              + 'a number 1 through 4.\n>> ')
+                              + 'a number\n1 through 4.\n>> ')
             else:
                 quality = input('There seems to be an error; please enter a number '
                               + '1 through 4.\n>> ')
@@ -343,7 +356,7 @@ def main():
                 reviews = None
                 continue
 
-            search_location_url = SEARCH + search_url + '&' + loc_url
+            search_location_url = SEARCH + search_url + '&' + location_url
             result_lst = quality_f(
                 new_url, int(quality), int(reviews), int(num_results),
                 search_location_url, price_url
@@ -358,7 +371,7 @@ def main():
             location = None
             continue
 
-    print('Found ' + str(len(result_lst)) + ' results.')
+    print('Found ' + str(len(result_lst)) + ' result(s).')
     for r in result_lst:
         webbrowser.open(r)
 
