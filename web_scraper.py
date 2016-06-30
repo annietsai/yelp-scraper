@@ -317,10 +317,10 @@ def main():
         while reviews is None:
             if m == 0:
                 reviews = input('At least how many customer reviews would you like '
-                    + 'on this request?\n>> ')
+                              + 'on this request?\n>> ')
             else:
                 reviews = input('There seems to be an error; please enter a valid '
-                    + 'number.\n>> ')
+                              + 'number.\n>> ')
 
             if startquit(reviews) == START:
                 reviews = START
@@ -337,8 +337,10 @@ def main():
                 continue
 
             search_location_url = SEARCH + search_url + '&' + loc_url
-            result_lst = quality_f(new_url, int(quality), int(reviews), int(num_results),
-                                   search_location_url, price_url)
+            result_lst = quality_f(
+                new_url, int(quality), int(reviews), int(num_results),
+                search_location_url, price_url
+                )
             if len(result_lst) == 0:
                 reviews = proceed(0)
                 if reviews is None:
