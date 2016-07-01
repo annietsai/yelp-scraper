@@ -18,7 +18,7 @@ def proceed(counter):
     if counter == 0:
         try_again = input('There seem to be no matches to your request. '
                         + 'Try again?\nEnter [y/n].\n>> ')
-    elif count > 0:
+    elif counter > 0:
         try_again = input('Please enter [y/n].\n>> ')
     else:
         print('There seem to be no matches to your request. Here are some\n'
@@ -34,7 +34,8 @@ def proceed(counter):
         restart = None
         while restart != 'y' and restart != 'n':
             if i == 0:
-                restart = input('Would you like to restart your search?\n>> ')
+                restart = input('Would you like to restart your search? '
+                              + 'Enter [y/n].\n>> ')
             else:
                 restart = input('Please enter [y/n].\n>> ')
 
@@ -66,8 +67,8 @@ def startquit(string):
     return None
 
 def main_content(url):
-    """Takes in a URL and parses HTML for corresponding webpage. Returns the
-    path to the main content of the webpage.
+    """Takes in a URL and parses HTML for corresponding webpage. Returns the path
+    to the main content of the webpage.
     """
     page = requests.get(url).content
     soup = BeautifulSoup(page, 'html.parser')
@@ -96,13 +97,15 @@ def result_soup(url, query):
                              .select('.clearfix')[0].h1.getText()
     return result
 
-def quality_f(url, quality, reviews, maximum, search, attrs):
+def quality_f(url, quality, reviews, maximum, search, attrs, low_dollars, high_dollars):
     """Looks at the webpage at URL to find all results matching the user's requested
     QUALITY and REVIEWS. Returns the MAXIMUM number of results or less. SEARCH provides
     the url string before '/start?' and ATTRS provifes the url string after '/start?'.
+    LOW_DOLLARS is the lower bound of the target price range category and HIGH_DOLLARS
+    is the upper bound of the target price range category.
     """
     results = []
-    start_at_item = 0
+    item_number = 0
     while len(results) < maximum:
         content = main_content(url)
         try:
@@ -140,27 +143,143 @@ def quality_f(url, quality, reviews, maximum, search, attrs):
                     biz_rating = int(biz_rating_str_lst[1])
 
                     if biz_rating >= reviews:
-                        link = URL + biz_info.h3.span.select('a[href]')[0]['href']
-                        results.append(link)
+                        price_category = biz_info.select('.price-category')[0]\
+                                                 .select('.bullet-after')[0]\
+                                                 .select('.price-range')[0].getText()
+                        len_price_category = len(price_category)
+
+                        if (len_price_category >= low_dollars
+                                and len_price_category <= high_dollars):
+                            link = URL + biz_info.h3.span.select('a[href]')[0]['href']
+                            results.append(link)
             except:
                 pass
 
-        start_at_item += 10
-        url = URL + search + START_SEARCH_AT + str(start_at_item) + attrs
+        item_number += 10
+        url = URL + search + START_SEARCH_AT + str(item_number) + attrs
 
     bound = max(len(results), maximum)
     if bound > maximum:
         bound = maximum
     return results[:bound]
 
-def main():
-    """Main function for Yelp Scraper."""
+# def location_f(counter):
+#     """Takes in a COUNTER to determine which question to prompt the user with.
+#     Calls on the search_f function and returns the result."""
+#     if counter == 0:
+#         location = input('What is your location? Input [city, state] for '
+#                        + 'best results.\n>> ')
+#     elif counter > 0:
+#         location = input('There seems to be an error; please enter a valid '
+#                        + 'location.\n>> ')
+#     else:
+#         location = input('There are multiple locations matching your search. '
+#                        + 'Please try\ninputting [city, state] or [city, country].'
+#                        + '\n>> ')
 
-    print('*** Welcome to Yelp Scraper, your Yelp-search aficionado. ***')
-    time.sleep(1)
-    print('At any time if you would like to restart your search, enter "start"')
-    print('or "-s". If you would like to quit, enter "quit" or "-q".')
-    time.sleep(1.5)
+#     if startquit(location) == START:
+#         return location_f(0)
+
+#     location_url = string_url_converter(location, 'loc')
+#     new_url = URL + SEARCH + location_url
+#     result = result_soup(new_url, 'location')
+
+#     if 'Sorry' in result:
+#         return location_f(10)
+#     elif 'found multiple' in result:
+#         return location_f(-10)
+#     return search_f(location_url)
+
+# def search_f(location_url):
+#     """Takes in the LOCATION_URL to form the new resulting url after user is
+#     prompted with search item. Returns the search url snippet or None if the
+#     search is restarted."""
+#     search = input('What are you searching for?\n>> ')
+
+#     if startquit(search) == START:
+#         # yelp_scraper()
+#         # return None
+#         return location_f(0) # return?
+
+#     search_url = string_url_converter(search, 'desc')
+#     new_url = URL + SEARCH + search_url + '&' + location_url
+#     result = result_soup(new_url, 'search')
+
+#     if 'No Results' not in result:
+#         return search_url
+
+#     search = proceed(0)
+#     if search == START:
+#         yelp_scraper()
+#         return None
+
+# def price_f(counter, search_url, location_url):
+#     """Takes in a COUNTER to determine which question to prompt the user with.
+#     LOCATION_URL and SEARCH_URL are used to help build the new url. Returns the
+#     resulting new url that will be used for further querying.
+#     """
+#     if counter == 0:
+#         price = input('What is your price range? Please enter input in the '
+#                     + 'format\n"[lower] to [upper]" or "[lower]-[upper]".\n>> ')
+#     else:
+#         new_url = URL + SEARCH + search_url + '&' + location_url
+#         price = input('There seems to be an error; please enter a valid price '
+#                     + 'range.\n>> ')
+
+#     if startquit(price) == START:
+#         yelp_scraper()
+#         return None
+
+#     price_text_lst = []
+#     if 'to' in price:
+#         price_text_lst = price.split(' ')
+#         price_text_lst.remove('to')
+#     elif '-' in price:
+#         if price.startswith('-'):
+#             return price_f(counter + 1, search_url, location_url)
+#         price_text_lst = price.split('-')
+
+#     price_text_lst = [p for p in price_text_lst if p != '']
+#     price_text_lst = [p.replace('$', '') for p in price_text_lst]
+
+#     try:
+#         lower_bound = int(price_text_lst[0])
+#         upper_bound = int(price_text_lst[1])
+#         if lower_bound < 0 or lower_bound > upper_bound:
+#             j += 1
+#             price = None
+#             continue
+#         price_url = '&attrs='
+#         if lower_bound <= 10:
+#             price_url = price_url + 'RestaurantsPriceRange2.1,'
+#         if upper_bound > 10 and lower_bound <= 30:
+#             price_url = price_url + 'RestaurantsPriceRange2.2,'
+#         if upper_bound > 30 and lower_bound <= 60:
+#             price_url = price_url + 'RestaurantsPriceRange2.3,'
+#         if upper_bound > 60:
+#             price_url = price_url + 'RestaurantsPriceRange2.4,'
+#         new_url = new_url + START_SEARCH_AT + '0' + price_url
+#     except:
+#         return price_f(counter + 1, search_url, location_url)
+
+#     result = result_soup(new_url, 'price')
+
+#     if 'No Results' in result:
+#         price = proceed(0)
+#         if price is None:
+#             return price_f(0, search_url, location_url)
+
+#     return new_url
+
+def yelp_scraper():
+    """Main functionality for Yelp Scraper. Prompts user for location, search
+    subject, price range, maximum number of results to show, target minimum
+    rating, and minimum number of customer reviews. Returns a list of links to
+    businesses on Yelp that match the user's request.
+    """
+
+    # result_lst = location_f(0)
+    # search_url = search_f(location_url)
 
     i = 0
     location = None
@@ -251,15 +370,32 @@ def main():
                     j += 1
                     price = None
                     continue
+
                 price_url = '&attrs='
+                lower_bound_num_dollar_signs = 1
+                upper_bound_num_dollar_signs = 1
+
                 if lower_bound <= 10:
                     price_url = price_url + 'RestaurantsPriceRange2.1,'
+
                 if upper_bound > 10 and lower_bound <= 30:
+                    if lower_bound > 10:
+                        lower_bound_num_dollar_signs = 2
+                    upper_bound_num_dollar_signs = 2
                     price_url = price_url + 'RestaurantsPriceRange2.2,'
+
                 if upper_bound > 30 and lower_bound <= 60:
+                    if lower_bound > 30:
+                        lower_bound_num_dollar_signs = 3
+                    upper_bound_num_dollar_signs = 3
                     price_url = price_url + 'RestaurantsPriceRange2.3,'
+
                 if upper_bound > 60:
+                    if lower_bound > 60:
+                        lower_bound_num_dollar_signs = 4
+                    upper_bound_num_dollar_signs = 4
                     price_url = price_url + 'RestaurantsPriceRange2.4,'
+
                 new_url = new_url + START_SEARCH_AT + '0' + price_url
             except:
                 j += 1
@@ -307,8 +443,8 @@ def main():
         quality = None
         while quality is None:
             if l == 0:
-                quality = input('What is your target minimum rating? Please enter '
-                              + 'a number\n1 through 4.\n>> ')
+                quality = input('What is your target minimum rating? Please enter a '
+                              + 'number\n1 through 4.\n>> ')
             else:
                 quality = input('There seems to be an error; please enter a number '
                               + '1 through 4.\n>> ')
@@ -359,20 +495,34 @@ def main():
             search_location_url = SEARCH + search_url + '&' + location_url
             result_lst = quality_f(
                 new_url, int(quality), int(reviews), int(num_results),
-                search_location_url, price_url
+                search_location_url, price_url, lower_bound_num_dollar_signs,
+                upper_bound_num_dollar_signs
                 )
             if len(result_lst) == 0:
-                reviews = proceed(0)
-                if reviews is None:
-                    m = 0
+                reviews = proceed(-10)
 
         if reviews == START:
             i = 0
             location = None
-            continue
 
-    print('Found ' + str(len(result_lst)) + ' result(s).')
-    for r in result_lst:
-        webbrowser.open(r)
+    return result_lst
+
+def main():
+    """Main function for Yelp Scraper."""
+    print('*** Welcome to Yelp Scraper, your Yelp-search aficionado. ***')
+    time.sleep(1)
+    print('At any time if you would like to restart your search, enter "start"')
+    print('or "-s". If you would like to quit, enter "quit" or "-q".')
+    time.sleep(1.5)
+
+    results = yelp_scraper()
+
+    results_len = len(results)
+    if results_len == 1:
+        print('Found 1 result.')
+    else:
+        print('Found ' + str(results_len) + ' result(s).')
+    for result in results:
+        webbrowser.open(result)
 
 main()
