@@ -9,6 +9,7 @@ URL = 'http://www.yelp.com'
 SEARCH = '/search?'
 START = 'start'
 START_SEARCH_AT = '&start='
+DEFAULT = 0
 
 def proceed(counter):
     """Determines whether or not a search query continues, restarts, or quits.
@@ -30,7 +31,7 @@ def proceed(counter):
     if try_again == 'y':
         return None
     elif try_again == 'n':
-        i = 0
+        i = DEFAULT
         restart = None
         while restart != 'y' and restart != 'n':
             if i == 0:
@@ -83,38 +84,40 @@ def result_soup(url, query):
     if query == 'location':
         try:
             result = content.select('#super-container')[0]\
-                                 .select('.container')[0]\
-                                 .select('.search-exception')[0]\
-                                 .select('.column-alpha')[0]\
-                                 .select('.content')[0].h2.getText()
+                            .select('.container')[0]\
+                            .select('.search-exception')[0]\
+                            .select('.column-alpha')[0]\
+                            .select('.content')[0].h2.getText()
         except:
             result = ''
     else:
         result = content.select('.top-shelf-grey')[0]\
-                             .select('.content-container')[0]\
-                             .select('.search-page-top')[0]\
-                             .select('.column-alpha')[0]\
-                             .select('.clearfix')[0].h1.getText()
+                        .select('.content-container')[0]\
+                        .select('.search-page-top')[0]\
+                        .select('.column-alpha')[0]\
+                        .select('.clearfix')[0].h1.getText()
     return result
 
-def quality_f(url, quality, reviews, maximum, search, attrs, low_dollars, high_dollars):
+def find_results(url, quality, reviews, maximum, search, attrs, low_dollars,
+                 high_dollars):
     """Looks at the webpage at URL to find all results matching the user's requested
     QUALITY and REVIEWS. Returns the MAXIMUM number of results or less. SEARCH provides
     the url string before '/start?' and ATTRS provifes the url string after '/start?'.
     LOW_DOLLARS is the lower bound of the target price range category and HIGH_DOLLARS
-    is the upper bound of the target price range category.
+    is the upper bound of the target price range category. Returns a list of urls for
+    webpages that correspond to the user's search qualifications.
     """
     results = []
-    item_number = 0
+    item_number = DEFAULT
     while len(results) < maximum:
         content = main_content(url)
         try:
             businesses = content.select('#super-container')[0]\
-                                     .select('.container')[0]\
-                                     .select('.search-results-block')[0]\
-                                     .select('.column-alpha')[0]\
-                                     .select('.indexed-biz-archive')[0]\
-                                     .select('.search-results-content')[0]
+                                .select('.container')[0]\
+                                .select('.search-results-block')[0]\
+                                .select('.column-alpha')[0]\
+                                .select('.indexed-biz-archive')[0]\
+                                .select('.search-results-content')[0]
         except:
             break
 
@@ -137,9 +140,8 @@ def quality_f(url, quality, reviews, maximum, search, attrs, low_dollars, high_d
                 if quality <= stars:
                     biz_rating_str_lst = biz_info.select('.biz-rating')[0]\
                                                  .span.getText().split(' ')
-                    biz_rating_str_lst = [
-                        value for value in biz_rating_str_lst if value != ''
-                        ]
+                    biz_rating_str_lst = [value for value in biz_rating_str_lst if
+                                          value != '']
                     biz_rating = int(biz_rating_str_lst[1])
 
                     if biz_rating >= reviews:
@@ -163,302 +165,254 @@ def quality_f(url, quality, reviews, maximum, search, attrs, low_dollars, high_d
         bound = maximum
     return results[:bound]
 
-def location_f(counter):
+def location_prompt(counter):
     """Takes in a COUNTER to determine which question to prompt the user with.
-    Calls on the search_f function and returns the result."""
+    Calls on the search_prompt function and returns the result.
+    """
     if counter == 0:
-        location = input('What is your location? Input [city, state] for '
-                       + 'best results.\n>> ')
+        location = input('What is your location? Input [city, state] for best '
+                         'results.\n>> ')
     elif counter > 0:
         location = input('There seems to be an error; please enter a valid '
-                       + 'location.\n>> ')
+                         'location.\n>> ')
     else:
         location = input('There are multiple locations matching your search. '
-                       + 'Please try\ninputting [city, state] or [city, country].'
-                       + '\n>> ')
+                         'Please try\ninputting [city, state] or [city, country].'
+                         '\n>> ')
 
     if startquit(location) == START:
-        return location_f(0)
+        return location_prompt(DEFAULT)
 
     location_url = string_url_converter(location, 'loc')
     new_url = URL + SEARCH + location_url
     result = result_soup(new_url, 'location')
 
     if 'Sorry' in result:
-        return location_f(10)
+        return location_prompt(1)
     elif 'found multiple' in result:
-        return location_f(-10)
-    return search_f(location_url)
+        return location_prompt(-1)
+    return search_prompt(location_url)
 
-def search_f(location_url):
+def search_prompt(location_url):
     """Takes in the LOCATION_URL to form the new resulting url after user is
-    prompted with search item. Returns the search url snippet or None if the
-    search is restarted."""
+    prompted with search item. Calls on the price_prompt function and returns the
+    result.
+    """
     search = input('What are you searching for?\n>> ')
 
     if startquit(search) == START:
-        # yelp_scraper()
-        # return None
-        return location_f(0) # return?
+        return location_prompt(DEFAULT)
 
     search_url = string_url_converter(search, 'desc')
+    search_location_url = SEARCH + search_url + '&' + location_url
     new_url = URL + SEARCH + search_url + '&' + location_url
-    result = result_soup(new_url, 'search')
+    search_result = result_soup(new_url, 'search')
 
-    if 'No Results' not in result:
-        return search_url
+    if 'No Results' not in search_result:
+        return price_prompt(search_url, location_url, search_location_url, DEFAULT)
 
-    search = proceed(0)
+    search = proceed(DEFAULT)
     if search == START:
-        yelp_scraper()
-        return None
+        return location_prompt(DEFAULT)
+    return search_prompt(location_url)
 
-def yelp_scraper():
-    """Main functionality for Yelp Scraper. Prompts user for location, search
-    subject, price range, maximum number of results to show, target minimum
-    rating, and minimum number of customer reviews. Returns a list of links to
-    businesses on Yelp that match the user's request.
+def price_prompt(search_url, location_url, search_location_url, counter):
+    """Takes in the SEARCH_URL and LOCATION_URL strings for the corresponding
+    search and location information to form a new url based on the user's desired
+    price category. COUNTER determines which question to prompt the user with.
+    Calls on and passes SEARCH_LOCATION_URL into the num_results_prompt function
+    and returns the result.
     """
+    new_url = URL + SEARCH + search_url + '&' + location_url
+    if counter == 0:
+        price = input('What is your price range? Please enter input in the '
+                      'format\n"[lower] to [upper]" or "[lower]-[upper]".\n'
+                      '>> ')
+    else:
+        price = input('There seems to be an error; please enter a valid price '
+                      'range.\n>> ')
 
-    # result_lst = location_f(0)
-    # search_url = search_f(location_url)
+    if startquit(price) == START:
+        return location_prompt(DEFAULT)
 
-    i = 0
-    location = None
-    while location is None:
-        if i == 0:
-            location = input('What is your location? Input [city, state] for best '
-                             'results.\n>> ')
-        elif i > 0:
-            location = input('There seems to be an error; please enter a valid '
-                             'location.\n>> ')
-        else:
-            location = input('There are multiple locations matching your search. '
-                             'Please try\ninputting [city, state] or [city, country].'
-                             '\n>> ')
+    price_text = []
+    if 'to' in price:
+        price_text = price.split(' ')
+        price_text.remove('to')
+    elif '-' in price:
+        if price.startswith('-'):
+            return price_prompt(search_url, location_url, search_location_url,
+                                counter + 1)
+        price_text = price.split('-')
 
-        if startquit(location) == START:
-            i = 0
-            location = None
-            continue
+    price_text = [string for string in price_text if string != '']
+    price_text = [string.replace('$', '') for string in price_text]
 
-        location_url = string_url_converter(location, 'loc')
-        new_url = URL + SEARCH + location_url
-        result = result_soup(new_url, 'location')
+    try:
+        price_low = int(price_text[0])
+        price_high = int(price_text[1])
+        if price_low < 0 or price_low > price_high:
+            return price_prompt(search_url, location_url, search_location_url,
+                                counter + 1)
 
-        if 'Sorry' in result:
-            i = 10
-            location = None
-            continue
-        elif 'found multiple' in result:
-            i = -10
-            location = None
-            continue
+        price_url = '&attrs='
+        one_dollar_sign = 10
+        two_dollar_sign = 30
+        three_dollar_sign = 60
 
-        search = None
-        while search is None:
-            search = input('What are you searching for?\n>> ')
+        low_dollars = 1
+        high_dollars = 1
 
-            if startquit(search) == START:
-                search = START
-                break
+        if price_low <= one_dollar_sign:
+            price_url += 'RestaurantsPriceRange2.1'
 
-            search_url = string_url_converter(search, 'desc')
-            new_url = URL + SEARCH + search_url + '&' + location_url
-            result = result_soup(new_url, 'search')
+        if price_high > one_dollar_sign and price_low <= two_dollar_sign:
+            price_url += ',RestaurantsPriceRange2.2'
+            if price_low > one_dollar_sign:
+                low_dollars = 2
+            high_dollars = 2
 
-            if 'No Results' not in result:
-                break
-            search = proceed(0)
+        if price_high > two_dollar_sign and price_low <= three_dollar_sign:
+            price_url += ',RestaurantsPriceRange2.3'
+            if price_low > two_dollar_sign:
+                low_dollars = 3
+            high_dollars = 3
 
-        if search == START:
-            i = 0
-            location = None
-            continue
+        if price_high > three_dollar_sign:
+            price_url += ',RestaurantsPriceRange2.4'
+            if price_low > three_dollar_sign:
+                low_dollars = 4
+            high_dollars = 4
 
-        j = 0
-        price = None
-        while price is None:
-            if j == 0:
-                price = input('What is your price range? Please enter input in the '
-                              'format\n"[lower] to [upper]" or "[lower]-[upper]".\n'
-                              '>> ')
-            else:
-                new_url = URL + SEARCH + search_url + '&' + location_url
-                price = input('There seems to be an error; please enter a valid price '
-                              'range.\n>> ')
+        new_url += START_SEARCH_AT + str(DEFAULT) + price_url
+    except:
+        return price_prompt(search_url, location_url, search_location_url,
+                            counter + 1)
 
-            if startquit(price) == START:
-                price = START
-                break
+    result = result_soup(new_url, 'price')
 
-            price_text_lst = []
-            if 'to' in price:
-                price_text_lst = price.split(' ')
-                price_text_lst.remove('to')
-            elif '-' in price:
-                if price.startswith('-'):
-                    j += 1
-                    price = None
-                    continue
-                price_text_lst = price.split('-')
-
-            price_text_lst = [p for p in price_text_lst if p != '']
-            price_text_lst = [p.replace('$', '') for p in price_text_lst]
-
-            try:
-                price_low = int(price_text_lst[0])
-                price_high = int(price_text_lst[1])
-                if price_low < 0 or price_low > price_high:
-                    j += 1
-                    price = None
-                    continue
-
-                price_url = '&attrs='
-                num_dollar_signs_low = 1
-                num_dollar_signs_high = 1
-
-                if price_low <= 10:
-                    price_url = price_url + 'RestaurantsPriceRange2.1,'
-
-                if price_high > 10 and price_low <= 30:
-                    if price_low > 10:
-                        num_dollar_signs_low = 2
-                    num_dollar_signs_high = 2
-                    price_url = price_url + 'RestaurantsPriceRange2.2,'
-
-                if price_high > 30 and price_low <= 60:
-                    if price_low > 30:
-                        num_dollar_signs_low = 3
-                    num_dollar_signs_high = 3
-                    price_url = price_url + 'RestaurantsPriceRange2.3,'
-
-                if price_high > 60:
-                    if price_low > 60:
-                        num_dollar_signs_low = 4
-                    num_dollar_signs_high = 4
-                    price_url = price_url + 'RestaurantsPriceRange2.4,'
-
-                new_url = new_url + START_SEARCH_AT + '0' + price_url
-            except:
-                j += 1
-                price = None
-                continue
-
-            result = result_soup(new_url, 'price')
-
-            if 'No Results' in result:
-                price = proceed(0)
-                if price is None:
-                    j = 0
-
+    if 'No Results' in result:
+        price = proceed(DEFAULT)
+        if price is None:
+            return price_prompt(search_url, location_url, search_location_url,
+                                counter)
         if price == START:
-            i = 0
-            location = None
-            continue
+            return location_prompt(DEFAULT)
+    return num_results_prompt(new_url, search_location_url, price_url,
+                              low_dollars, high_dollars, DEFAULT)
 
-        k = 0
-        num_results = None
-        while num_results is None:
-            if k == 0:
-                num_results = input('What is the maximum number of results you would '
-                                    'like to show?\n>> ')
-            else:
-                num_results = input('There seems to be an error; please enter a valid '
-                                    'number.\n>> ')
+def num_results_prompt(url, search_location_url, price_url, low_dollars,
+                       high_dollars, counter):
+    """Queries user for the maximum number of results on the search. Takes in
+    the final URL for the search as well as the SEARCH_LOCATION_URL and PRICE_URL
+    to pass into the function quality_prompt. LOW_DOLLARS and HIGH_DOLLARS are
+    also passed into quality_prompt. COUNTER determines which question to prompt
+    the user with. Calls and returns the result of the quality_prompt function.
+    """
+    if counter == 0:
+        num_results = input('What is the maximum number of results you would '
+                            'like to show?\n>> ')
+    else:
+        num_results = input('There seems to be an error; please enter a valid '
+                            'number.\n>> ')
 
-            if startquit(num_results) == START:
-                num_results = START
-                break
+    if startquit(num_results) == START:
+        return location_prompt(DEFAULT)
 
-            try:
-                int(num_results)
-            except:
-                num_results = None
-                k += 1
+    try:
+        num_results_int = int(num_results)
+    except:
+        return num_results_prompt(url, search_location_url, price_url,
+                                  low_dollars, high_dollars, counter + 1)
 
-        if num_results == START:
-            i = 0
-            location = None
-            continue
+    return quality_prompt(url, num_results_int, search_location_url,
+                          price_url, low_dollars, high_dollars, DEFAULT)
 
-        l = 0
-        quality = None
-        while quality is None:
-            if l == 0:
-                quality = input('What is your target minimum rating? Please enter a '
-                                'number\n1 through 4.\n>> ')
-            else:
-                quality = input('There seems to be an error; please enter a number '
-                                '1 through 4.\n>> ')
+def quality_prompt(url, num_results, search_location_url, price_url,
+                   low_dollars, high_dollars, counter):
+    """Queries user for the target minimum rating on the search. Takes in the
+    final URL for the search as well as the SEARCH_LOCATION_URL and PRICE_URL
+    to pass into the function reviews_prompt. NUM_RESULTS, LOW_DOLLARS, and
+    HIGH_DOLLARS are also passed into reviews_prompt. COUNTER determines which
+    question to prompt the user with. Calls and returns the result of the
+    reviews_prompt function.
+    """
+    if counter == 0:
+        quality = input('What is your target minimum rating? Please enter a '
+                        'number\n1 through 4.\n>> ')
+    else:
+        quality = input('There seems to be an error; please enter a number '
+                        '1 through 4.\n>> ')
 
-            if startquit(quality) == START:
-                quality = START
-                break
+    if startquit(quality) == START:
+        return location_prompt(DEFAULT)
 
-            try:
-                if int(quality) < 1 or int(quality) > 4:
-                    l += 1
-                    quality = None
-                    continue
-            except:
-                l += 1
-                quality = None
-                continue
+    try:
+        quality_int = int(quality) #turn to float?
+        if quality_int < 1 or quality_int > 4:
+            return quality_prompt(url, num_results, search_location_url,
+                                  price_url, low_dollars, high_dollars,
+                                  counter + 1)
+    except:
+        return quality_prompt(url, num_results, search_location_url,
+                              price_url, low_dollars, high_dollars,
+                              counter + 1)
 
-        if quality == START:
-            i = 0
-            location = None
-            continue
+    if quality == START:
+        return location_prompt(DEFAULT)
+    return reviews_prompt(url, quality_int, num_results,
+                          search_location_url, price_url, low_dollars,
+                          high_dollars, DEFAULT)
 
-        m = 0
-        reviews = None
-        while reviews is None:
-            if m == 0:
-                reviews = input('At least how many customer reviews would you like '
-                                'on this request?\n>> ')
-            else:
-                reviews = input('There seems to be an error; please enter a valid '
-                                'number.\n>> ')
+def reviews_prompt(url, quality, num_results, search_location_url,
+                   price_url, low_dollars, high_dollars, counter):
+    """Queries user for the minimum number of customer reviews on the search.
+    Takes in the final URL for the search as well as the SEARCH_LOCATION_URL
+    and PRICE_URL to pass into the function find_results. QUALITY, NUM_RESULTS,
+    LOW_DOLLARS, and HIGH_DOLLARS are also passed into find_results. COUNTER
+    determines which question to prompt the user with. Calls and returns the
+    result of the find_results function.
+    """
+    if counter == 0:
+        reviews = input('At least how many customer reviews would you like '
+                        'on this request?\n>> ')
+    else:
+        reviews = input('There seems to be an error; please enter a valid '
+                        'number.\n>> ')
 
-            if startquit(reviews) == START:
-                reviews = START
-                break
+    if startquit(reviews) == START:
+        return location_prompt(DEFAULT)
 
-            try:
-                if int(reviews) < 0:
-                    m += 1
-                    reviews = None
-                    continue
-            except:
-                m += 1
-                reviews = None
-                continue
+    try:
+        reviews_int = int(reviews)
+        if reviews_int < 0:
+            return reviews_prompt(url, quality, num_results, search_location_url,
+                                  price_url, low_dollars, high_dollars,
+                                  counter + 1)
+    except:
+        return reviews_prompt(url, quality, num_results, search_location_url,
+                              price_url, low_dollars, high_dollars, counter + 1)
 
-            search_location_url = SEARCH + search_url + '&' + location_url
-            result_lst = quality_f(
-                new_url, int(quality), int(reviews), int(num_results),
-                search_location_url, price_url, num_dollar_signs_low,
-                num_dollar_signs_high
-                )
-            if len(result_lst) == 0:
-                reviews = proceed(-10)
+    result_lst = find_results(url, quality, reviews_int, num_results,
+                              search_location_url, price_url, low_dollars,
+                              high_dollars)
+    if len(result_lst) == 0:
+        reviews = proceed(-1)
 
-        if reviews == START:
-            i = 0
-            location = None
-
+    if reviews == START:
+        return location_prompt(DEFAULT)
     return result_lst
 
 def main():
     """Main function for Yelp Scraper."""
+
     print('*** Welcome to Yelp Scraper, your Yelp-search aficionado. ***')
     time.sleep(1)
     print('At any time if you would like to restart your search, enter "start"\n'
           'or "-s". If you would like to quit, enter "quit" or "-q".')
     time.sleep(1.5)
 
-    results = yelp_scraper()
+    results = location_prompt(DEFAULT)
 
     results_len = len(results)
     if results_len == 1:
