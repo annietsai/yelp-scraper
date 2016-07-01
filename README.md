@@ -36,7 +36,29 @@ which the file is saved using:
     `$ python3 web_scraper.py`  
 Because the program opens up to the maximum number of Yelp webpage search
 results requested by the user, take care to limit the number of results
-requested in order to protect your computer from lagging or crashing. 
+requested in order to protect your computer from lagging or crashing.
+
+A successful run of the program may look like this:  
+    `*** Welcome to Yelp Scraper, your Yelp-search aficionado. ***`
+    `At any time if you would like to restart your search, enter "start"`
+    `or "-s". If you would like to quit, enter "quit" or "-q".`
+    `What is your location? Input [city, state] for best results.`
+    `>> berkeley`
+    `What are you searching for?`
+    `>> food`
+    `What is your price range? Please enter input in the format`
+    `"[lower] to [upper]" or "[lower]-[upper]".`
+    `>> 0-50`
+    `What is the maximum number of results you would like to show?`
+    `>> 3`
+    `What is your target minimum rating? Please enter a number`
+    `0 through 5.`
+    `>> 4`
+    `At least how many customer reviews would you like on this request?`
+    `>> 1000`
+    `Found 3 results.`
+
+The webpages should automatically open in your browser.
 
 Authors
 -------
