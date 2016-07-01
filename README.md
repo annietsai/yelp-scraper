@@ -19,7 +19,7 @@ many simple ways of installation:
 package manager:  
     `$ apt-get install python-bs4`
 2. Beautiful Soup 4 is published through Pypi, so if you can't install it with
-the system packager, you can install it with `easy-install` or `pip`:  
+the system packager, you can install it with `easy_install` or `pip`:  
     `$ easy_install beautifulsoup4`  
     `$ pip install beautifulsoup4`
 3. If you don't have `easy_install` or `pip` installed, you can [download](https://www.crummy.com/software/BeautifulSoup/bs4/download/4.0/)
