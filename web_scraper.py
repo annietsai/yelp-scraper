@@ -163,12 +163,65 @@ def quality_f(url, quality, reviews, maximum, search, attrs, low_dollars, high_d
         bound = maximum
     return results[:bound]
 
+def location_f(counter):
+    """Takes in a COUNTER to determine which question to prompt the user with.
+    Calls on the search_f function and returns the result."""
+    if counter == 0:
+        location = input('What is your location? Input [city, state] for '
+                       + 'best results.\n>> ')
+    elif counter > 0:
+        location = input('There seems to be an error; please enter a valid '
+                       + 'location.\n>> ')
+    else:
+        location = input('There are multiple locations matching your search. '
+                       + 'Please try\ninputting [city, state] or [city, country].'
+                       + '\n>> ')
+
+    if startquit(location) == START:
+        return location_f(0)
+
+    location_url = string_url_converter(location, 'loc')
+    new_url = URL + SEARCH + location_url
+    result = result_soup(new_url, 'location')
+
+    if 'Sorry' in result:
+        return location_f(10)
+    elif 'found multiple' in result:
+        return location_f(-10)
+    return search_f(location_url)
+
+def search_f(location_url):
+    """Takes in the LOCATION_URL to form the new resulting url after user is
+    prompted with search item. Returns the search url snippet or None if the
+    search is restarted."""
+    search = input('What are you searching for?\n>> ')
+
+    if startquit(search) == START:
+        # yelp_scraper()
+        # return None
+        return location_f(0) # return?
+
+    search_url = string_url_converter(search, 'desc')
+    new_url = URL + SEARCH + search_url + '&' + location_url
+    result = result_soup(new_url, 'search')
+
+    if 'No Results' not in result:
+        return search_url
+
+    search = proceed(0)
+    if search == START:
+        yelp_scraper()
+        return None
+
 def yelp_scraper():
     """Main functionality for Yelp Scraper. Prompts user for location, search
     subject, price range, maximum number of results to show, target minimum
     rating, and minimum number of customer reviews. Returns a list of links to
     businesses on Yelp that match the user's request.
     """
+
+    # result_lst = location_f(0)
+    # search_url = search_f(location_url)
 
     i = 0
     location = None
