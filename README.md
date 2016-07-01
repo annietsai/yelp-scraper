@@ -39,6 +39,7 @@ results requested by the user, take care to limit the number of results
 requested in order to protect your computer from lagging or crashing.
 
 A successful run of the program may look like this:  
+
     ```
     *** Welcome to Yelp Scraper, your Yelp-search aficionado. ***  
     At any time if you would like to restart your search, enter "start"  
