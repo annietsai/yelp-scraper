@@ -105,9 +105,9 @@ def price_category_url(price_low, price_high):
     bounds represented in number of dollar signs on Yelp.
     """
     price_url = '&attrs='
-    one_dollar_sign = 10
-    two_dollar_sign = 30
-    three_dollar_sign = 60
+    one_dollar_sign = 10.0
+    two_dollar_sign = 30.0
+    three_dollar_sign = 60.0
     low_dollars = 1
     high_dollars = 1
 
@@ -174,8 +174,8 @@ def find_results(url, quality, reviews, maximum, search, attrs, low_dollars,
                 rating = biz_info.select('.biz-rating')[0].select('.rating-large')[0].i
                 stars = int(str(rating).split(' ')[2].split('_')[1].strip('"'))
                 if quality <= stars:
-                    biz_rating_str_lst = biz_info.select('.biz-rating')[0]\
-                                                 .span.getText().split(' ')
+                    biz_rating_str_lst = biz_info.select('.biz-rating')[0].span\
+                                                 .getText().split(' ')
                     biz_rating_str_lst = [value for value in biz_rating_str_lst if
                                           value != '']
                     biz_rating = int(biz_rating_str_lst[1])
@@ -285,9 +285,9 @@ def price_prompt(search_url, location_url, search_location_url, counter):
         price_text = [string for string in price_text if string != '']
         price_text = [string.replace('$', '') for string in price_text]
 
-        price_low = int(price_text[0])
-        price_high = int(price_text[1])
-        if price_low < 0 or price_low > price_high:
+        price_low = float(price_text[0])
+        price_high = float(price_text[1])
+        if price_low < 0.0 or price_low > price_high:
             return price_prompt(search_url, location_url, search_location_url,
                                 counter + 1)
 
@@ -348,17 +348,20 @@ def quality_prompt(url, num_results, search_location_url, price_url,
     """
     if counter == 0:
         quality = input('What is your target minimum rating? Please enter a '
-                        'number\n1 through 4.\n>> ')
+                        'number\n0 through 5.\n>> ')
     else:
         quality = input('There seems to be an error; please enter a number '
-                        '1 through 4.\n>> ')
+                        '0 through 5.\n>> ')
 
     if start_quit_check(quality) == START:
         return location_prompt(DEFAULT)
 
     try:
-        quality_int = int(quality) #turn to float?
-        if quality_int < 1 or quality_int > 4:
+        quality_float = float(quality)
+        lowest_rating = 0.0
+        highest_rating = 5.0
+
+        if quality_float < lowest_rating or quality_float > highest_rating:
             return quality_prompt(url, num_results, search_location_url,
                                   price_url, low_dollars, high_dollars,
                                   counter + 1)
@@ -369,7 +372,7 @@ def quality_prompt(url, num_results, search_location_url, price_url,
 
     if quality == START:
         return location_prompt(DEFAULT)
-    return reviews_prompt(url, quality_int, num_results,
+    return reviews_prompt(url, quality_float, num_results,
                           search_location_url, price_url, low_dollars,
                           high_dollars, DEFAULT)
 
