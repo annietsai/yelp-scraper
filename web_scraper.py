@@ -57,7 +57,7 @@ def string_url_converter(query, string):
     find_url = 'find_' + string + '=' + converted_query
     return find_url
 
-def startquit(string):
+def start_quit_check(string):
     """Checks if the user inputted a STRING to restart the search or quit.
     Returns None to continue, 'start' to restart, or exits program to quit.
     """
@@ -97,6 +97,42 @@ def result_soup(url, query):
                         .select('.column-alpha')[0]\
                         .select('.clearfix')[0].h1.getText()
     return result
+
+def price_category_url(price_low, price_high):
+    """Takes in a lower bound price range PRICE_LOW and an upper bound price
+    range PRICE_HIGH and creates a url snippet corresponding to the appropriate
+    price category. Returns this url snippet accompanied with the price category
+    bounds represented in number of dollar signs on Yelp.
+    """
+    price_url = '&attrs='
+    one_dollar_sign = 10
+    two_dollar_sign = 30
+    three_dollar_sign = 60
+    low_dollars = 1
+    high_dollars = 1
+
+    if price_low <= one_dollar_sign:
+        price_url += 'RestaurantsPriceRange2.1'
+
+    if price_high > one_dollar_sign and price_low <= two_dollar_sign:
+        price_url += ',RestaurantsPriceRange2.2'
+        if price_low > one_dollar_sign:
+            low_dollars = 2
+        high_dollars = 2
+
+    if price_high > two_dollar_sign and price_low <= three_dollar_sign:
+        price_url += ',RestaurantsPriceRange2.3'
+        if price_low > two_dollar_sign:
+            low_dollars = 3
+        high_dollars = 3
+
+    if price_high > three_dollar_sign:
+        price_url += ',RestaurantsPriceRange2.4'
+        if price_low > three_dollar_sign:
+            low_dollars = 4
+        high_dollars = 4
+
+    return price_url, low_dollars, high_dollars
 
 def find_results(url, quality, reviews, maximum, search, attrs, low_dollars,
                  high_dollars):
@@ -180,7 +216,7 @@ def location_prompt(counter):
                          'Please try\ninputting [city, state] or [city, country].'
                          '\n>> ')
 
-    if startquit(location) == START:
+    if start_quit_check(location) == START:
         return location_prompt(DEFAULT)
 
     location_url = string_url_converter(location, 'loc')
@@ -200,7 +236,7 @@ def search_prompt(location_url):
     """
     search = input('What are you searching for?\n>> ')
 
-    if startquit(search) == START:
+    if start_quit_check(search) == START:
         return location_prompt(DEFAULT)
 
     search_url = string_url_converter(search, 'desc')
@@ -232,58 +268,31 @@ def price_prompt(search_url, location_url, search_location_url, counter):
         price = input('There seems to be an error; please enter a valid price '
                       'range.\n>> ')
 
-    if startquit(price) == START:
+    if start_quit_check(price) == START:
         return location_prompt(DEFAULT)
 
     price_text = []
-    if 'to' in price:
-        price_text = price.split(' ')
-        price_text.remove('to')
-    elif '-' in price:
-        if price.startswith('-'):
-            return price_prompt(search_url, location_url, search_location_url,
-                                counter + 1)
-        price_text = price.split('-')
-
-    price_text = [string for string in price_text if string != '']
-    price_text = [string.replace('$', '') for string in price_text]
-
     try:
+        if 'to' in price:
+            price_text = price.split(' ')
+            price_text.remove('to')
+        elif '-' in price:
+            if price.startswith('-'):
+                return price_prompt(search_url, location_url, search_location_url,
+                                    counter + 1)
+            price_text = price.split('-')
+
+        price_text = [string for string in price_text if string != '']
+        price_text = [string.replace('$', '') for string in price_text]
+
         price_low = int(price_text[0])
         price_high = int(price_text[1])
         if price_low < 0 or price_low > price_high:
             return price_prompt(search_url, location_url, search_location_url,
                                 counter + 1)
 
-        price_url = '&attrs='
-        one_dollar_sign = 10
-        two_dollar_sign = 30
-        three_dollar_sign = 60
-
-        low_dollars = 1
-        high_dollars = 1
-
-        if price_low <= one_dollar_sign:
-            price_url += 'RestaurantsPriceRange2.1'
-
-        if price_high > one_dollar_sign and price_low <= two_dollar_sign:
-            price_url += ',RestaurantsPriceRange2.2'
-            if price_low > one_dollar_sign:
-                low_dollars = 2
-            high_dollars = 2
-
-        if price_high > two_dollar_sign and price_low <= three_dollar_sign:
-            price_url += ',RestaurantsPriceRange2.3'
-            if price_low > two_dollar_sign:
-                low_dollars = 3
-            high_dollars = 3
-
-        if price_high > three_dollar_sign:
-            price_url += ',RestaurantsPriceRange2.4'
-            if price_low > three_dollar_sign:
-                low_dollars = 4
-            high_dollars = 4
-
+        price_url, low_dollars, high_dollars = price_category_url(price_low,
+                                                                  price_high)
         new_url += START_SEARCH_AT + str(DEFAULT) + price_url
     except:
         return price_prompt(search_url, location_url, search_location_url,
@@ -316,7 +325,7 @@ def num_results_prompt(url, search_location_url, price_url, low_dollars,
         num_results = input('There seems to be an error; please enter a valid '
                             'number.\n>> ')
 
-    if startquit(num_results) == START:
+    if start_quit_check(num_results) == START:
         return location_prompt(DEFAULT)
 
     try:
@@ -344,7 +353,7 @@ def quality_prompt(url, num_results, search_location_url, price_url,
         quality = input('There seems to be an error; please enter a number '
                         '1 through 4.\n>> ')
 
-    if startquit(quality) == START:
+    if start_quit_check(quality) == START:
         return location_prompt(DEFAULT)
 
     try:
@@ -380,7 +389,7 @@ def reviews_prompt(url, quality, num_results, search_location_url,
         reviews = input('There seems to be an error; please enter a valid '
                         'number.\n>> ')
 
-    if startquit(reviews) == START:
+    if start_quit_check(reviews) == START:
         return location_prompt(DEFAULT)
 
     try:
